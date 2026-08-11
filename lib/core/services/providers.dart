@@ -87,12 +87,6 @@ class CurrentUserNotifier extends StateNotifier<LecturerUser?> {
     await _authService.sendPasswordReset(email);
   }
 
-  Future<void> signInWithGoogle() async {
-    final user = await _authService.signInWithGoogle();
-    state = user;
-    await _db.saveUser(user);
-  }
-
   Future<void> signOut() async {
     await _authService.signOut();
     state = null;

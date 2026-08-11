@@ -12,7 +12,6 @@ import '../../../shared/models/attendance_session.dart';
 import '../../../shared/widgets/stat_card.dart';
 import '../../../shared/widgets/course_card.dart';
 import '../../../shared/widgets/empty_state.dart';
-import '../../../shared/widgets/sync_status_badge.dart';
 import '../../../shared/widgets/quick_action_hub.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -39,7 +38,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     final coursesAsync = ref.watch(coursesStreamProvider);
-    final syncState = ref.watch(syncServiceProvider).state;
 
     final greetingHour = DateTime.now().hour;
     final timeGreeting = greetingHour < 12
@@ -78,7 +76,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
-            child: SyncStatusBadge(state: syncState),
+            child: InkWell(
+              onTap: () => context.push('/profile'),
+              borderRadius: BorderRadius.circular(20),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: AppColors.primaryContainer,
+                backgroundImage: user?.photoUrl != null ? NetworkImage(user!.photoUrl!) : null,
+                child: user?.photoUrl == null
+                    ? Text(
+                        (user?.name.isNotEmpty == true) ? user!.name[0].toUpperCase() : 'D',
+                        style: AppTypography.titleMd.copyWith(color: AppColors.onPrimary, fontSize: 14),
+                      )
+                    : null,
+              ),
+            ),
           ),
         ],
       ),

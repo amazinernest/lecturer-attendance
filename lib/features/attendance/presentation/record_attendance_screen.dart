@@ -37,12 +37,33 @@ class _RecordAttendanceScreenState extends ConsumerState<RecordAttendanceScreen>
   List<Student> _students = [];
   Course? _course;
 
+  late TextEditingController _searchController;
+  String _searchQuery = '';
+
+  List<Student> get _filteredStudents {
+    if (_searchQuery.isEmpty) return _students;
+    return _students.where((s) {
+      final nameMatches = s.name.toLowerCase().contains(_searchQuery);
+      final matricMatches = s.matricNumber.toLowerCase().contains(_searchQuery);
+      return nameMatches || matricMatches;
+    }).toList();
+  }
+
   @override
   void initState() {
     super.initState();
     _topicController = TextEditingController(text: 'Lecture Review');
     _classNumberController = TextEditingController(text: '1');
+    _searchController = TextEditingController();
     _loadInitialData();
+  }
+
+  @override
+  void dispose() {
+    _topicController.dispose();
+    _classNumberController.dispose();
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadInitialData() async {
@@ -287,16 +308,39 @@ class _RecordAttendanceScreenState extends ConsumerState<RecordAttendanceScreen>
 
           const Divider(height: 1),
 
-          // Student List Header
+          // Search Bar & Student List Header
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
               children: [
-                Text('Student List (${_students.length})', style: AppTypography.titleMd.copyWith(fontSize: 16)),
-                Text(
-                  '${_attendanceStatusMap.values.where((v) => v == AttendanceStatus.present).length} Present',
-                  style: AppTypography.labelMd.copyWith(color: AppColors.presentGreen, fontWeight: FontWeight.w700),
+                TextField(
+                  controller: _searchController,
+                  onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
+                  decoration: InputDecoration(
+                    hintText: 'Search student by name or matric number...',
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Student List (${_filteredStudents.length})', style: AppTypography.titleMd.copyWith(fontSize: 16)),
+                    Text(
+                      '${_attendanceStatusMap.values.where((v) => v == AttendanceStatus.present).length} Present',
+                      style: AppTypography.labelMd.copyWith(color: AppColors.presentGreen, fontWeight: FontWeight.w700),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -304,49 +348,56 @@ class _RecordAttendanceScreenState extends ConsumerState<RecordAttendanceScreen>
 
           // Student Attendance List
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              itemCount: _students.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final s = _students[index];
-                final currentStatus = _attendanceStatusMap[s.id] ?? AttendanceStatus.present;
+            child: _filteredStudents.isEmpty
+                ? Center(
+                    child: Text(
+                      _searchQuery.isEmpty ? 'No students found.' : 'No students matching "$_searchQuery"',
+                      style: AppTypography.bodyMd.copyWith(color: AppColors.secondary),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    itemCount: _filteredStudents.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final s = _filteredStudents[index];
+                      final currentStatus = _attendanceStatusMap[s.id] ?? AttendanceStatus.present;
 
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: AppColors.primaryContainer.withValues(alpha: 0.1),
-                          child: Text(
-                            s.name.isNotEmpty ? s.name[0].toUpperCase() : 'S',
-                            style: AppTypography.titleMd.copyWith(color: AppColors.primaryContainer, fontSize: 13),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                      return Card(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          child: Row(
                             children: [
-                              Text(s.name, style: AppTypography.titleMd.copyWith(fontSize: 15)),
-                              Text(s.matricNumber, style: AppTypography.labelMd.copyWith(fontSize: 12)),
+                              CircleAvatar(
+                                radius: 18,
+                                backgroundColor: AppColors.primaryContainer.withValues(alpha: 0.1),
+                                child: Text(
+                                  s.name.isNotEmpty ? s.name[0].toUpperCase() : 'S',
+                                  style: AppTypography.titleMd.copyWith(color: AppColors.primaryContainer, fontSize: 13),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(s.name, style: AppTypography.titleMd.copyWith(fontSize: 15)),
+                                    Text(s.matricNumber, style: AppTypography.labelMd.copyWith(fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                              AttendanceToggle(
+                                status: currentStatus,
+                                onChanged: (newStatus) {
+                                  setState(() => _attendanceStatusMap[s.id] = newStatus);
+                                },
+                              ),
                             ],
                           ),
                         ),
-                        AttendanceToggle(
-                          status: currentStatus,
-                          onChanged: (newStatus) {
-                            setState(() => _attendanceStatusMap[s.id] = newStatus);
-                          },
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
 
           // Bottom Action Bar

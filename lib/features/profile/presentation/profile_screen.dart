@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/providers.dart';
 import '../../../core/services/storage_service.dart';
@@ -228,11 +229,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.privacy_tip_outlined, color: AppColors.primaryContainer),
-                  title: const Text('Privacy & Security'),
-                  subtitle: const Text('Supabase RLS Data Isolation Active'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {},
+                  leading: const Icon(Icons.help_outline, color: AppColors.primaryContainer),
+                  title: const Text('Help & Support'),
+                  subtitle: const Text('Contact developer (amazinernest@gmail.com)'),
+                  trailing: const Icon(Icons.mail_outline, size: 20),
+                  onTap: () async {
+                    final Uri emailUri = Uri(
+                      scheme: 'mailto',
+                      path: 'amazinernest@gmail.com',
+                      queryParameters: {'subject': 'Lecturer Attendance Support & Inquiry'},
+                    );
+                    if (await canLaunchUrl(emailUri)) {
+                      await launchUrl(emailUri);
+                    } else {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Could not open email client. Contact: amazinernest@gmail.com'),
+                          ),
+                        );
+                      }
+                    }
+                  },
                 ),
               ],
             ),

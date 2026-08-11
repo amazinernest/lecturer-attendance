@@ -17,7 +17,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
 
   bool _isLoading = false;
-  bool _isGoogleLoading = false;
   bool _obscurePassword = true;
 
   @override
@@ -87,28 +86,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _handleGoogleSignIn() async {
-    setState(() => _isGoogleLoading = true);
-    try {
-      await ref.read(currentUserProvider.notifier).signInWithGoogle();
-      if (mounted) {
-        context.go('/dashboard');
-      }
-    } catch (e) {
-      if (mounted) {
-        final errorMsg = e.toString().replaceAll('Exception: ', '');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Google Sign-In failed: $errorMsg'),
-            backgroundColor: AppColors.absentRed,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isGoogleLoading = false);
     }
   }
 
@@ -209,7 +186,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Sign In Button
                 ElevatedButton(
-                  onPressed: (_isLoading || _isGoogleLoading) ? null : _handleEmailLogin,
+                  onPressed: _isLoading ? null : _handleEmailLogin,
                   child: _isLoading
                       ? const SizedBox(
                           width: 24,
@@ -220,50 +197,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         )
                       : const Text('Sign In'),
-                ),
-
-                const SizedBox(height: 20),
-
-                Row(
-                  children: [
-                    const Expanded(child: Divider()),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text('OR', style: AppTypography.labelMd.copyWith(color: AppColors.outline, fontSize: 12)),
-                    ),
-                    const Expanded(child: Divider()),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                // Google Sign In Button
-                OutlinedButton(
-                  onPressed: (_isLoading || _isGoogleLoading) ? null : _handleGoogleSignIn,
-                  child: _isGoogleLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryContainer),
-                          ),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.g_mobiledata_rounded, size: 26, color: AppColors.primaryContainer),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Continue with Google',
-                              style: AppTypography.titleMd.copyWith(
-                                color: AppColors.primaryContainer,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
                 ),
 
                 const SizedBox(height: 28),

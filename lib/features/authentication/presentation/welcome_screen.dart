@@ -1,39 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/services/providers.dart';
 
-class WelcomeScreen extends ConsumerStatefulWidget {
+class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
-
-  @override
-  ConsumerState<WelcomeScreen> createState() => _WelcomeScreenState();
-}
-
-class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
-  bool _isGoogleLoading = false;
-
-  Future<void> _handleGoogleSignIn() async {
-    setState(() => _isGoogleLoading = true);
-    try {
-      await ref.read(currentUserProvider.notifier).signInWithGoogle();
-      if (mounted) {
-        context.go('/dashboard');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Sign in failed: ${e.toString().replaceAll('Exception: ', '')}'),
-            backgroundColor: AppColors.absentRed,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isGoogleLoading = false);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,26 +18,29 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
             children: [
               const Spacer(flex: 2),
 
-              // Academic Logo Icon
+              // Academic App Logo Icon
               Center(
                 child: Container(
-                  width: 96,
-                  height: 96,
+                  width: 108,
+                  height: 108,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryContainer,
-                    shape: BoxShape.circle,
+                    borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primaryContainer.withValues(alpha: 0.25),
-                        blurRadius: 18,
+                        color: AppColors.primaryContainer.withValues(alpha: 0.2),
+                        blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.how_to_reg_rounded,
-                    size: 48,
-                    color: AppColors.onPrimary,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Image.asset(
+                      'assets/images/app_icon.png',
+                      width: 108,
+                      height: 108,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),
@@ -109,45 +82,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               // Sign In Button
               OutlinedButton(
                 onPressed: () => context.push('/login'),
-                child: const Text('Sign In with Email'),
+                child: const Text('Sign In'),
               ),
 
-              const SizedBox(height: 16),
-
-              Row(
-                children: [
-                  const Expanded(child: Divider()),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text('OR', style: AppTypography.labelMd.copyWith(color: AppColors.outline, fontSize: 12)),
-                  ),
-                  const Expanded(child: Divider()),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // Continue with Google Button
-              TextButton.icon(
-                onPressed: _isGoogleLoading ? null : _handleGoogleSignIn,
-                icon: _isGoogleLoading
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.g_mobiledata_rounded, size: 26, color: AppColors.primaryContainer),
-                label: Text(
-                  'Continue with Google',
-                  style: AppTypography.labelMd.copyWith(
-                    color: AppColors.primaryContainer,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
               Text(
                 'Works offline • Automatic Cloud Sync',

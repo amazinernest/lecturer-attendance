@@ -1,10 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../shared/models/lecturer_user.dart';
 
 class AuthService {
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   SupabaseClient? get _supabaseClient {
     try {
@@ -100,40 +98,6 @@ class AuthService {
     );
   }
 
-  /// Signs in with Google fallback
-  Future<LecturerUser> signInWithGoogle() async {
-    try {
-      final client = _supabaseClient;
-      if (client != null && (kIsWeb || defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)) {
-        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-        if (googleUser == null) {
-          throw Exception('Google Sign-In was cancelled by user.');
-        }
-
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-        final accessToken = googleAuth.accessToken;
-        final idToken = googleAuth.idToken;
-
-        if (idToken != null) {
-          final response = await client.auth.signInWithIdToken(
-            provider: OAuthProvider.google,
-            idToken: idToken,
-            accessToken: accessToken,
-          );
-
-          if (response.user != null) {
-            return _mapSupabaseUserToLecturerUser(response.user!);
-          }
-        }
-      }
-    } catch (e) {
-      if (e.toString().contains('cancelled')) rethrow;
-      debugPrint('Google Auth error: $e');
-    }
-
-    return demoUser;
-  }
-
   /// Get current authenticated user
   LecturerUser? getCurrentUser() {
     final client = _supabaseClient;
@@ -159,7 +123,6 @@ class AuthService {
   /// Sign out current user
   Future<void> signOut() async {
     try {
-      await _googleSignIn.signOut();
       await _supabaseClient?.auth.signOut();
     } catch (_) {}
   }
