@@ -2,8 +2,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:typed_data';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/providers.dart';
+import '../../../core/services/storage_service.dart';
 import '../../../core/utils/class_list_parser.dart';
 
 class ImportClassListScreen extends ConsumerStatefulWidget {
@@ -20,6 +22,7 @@ class _ImportClassListScreenState extends ConsumerState<ImportClassListScreen> {
   bool _isImporting = false;
 
   String? _selectedFileName;
+  Uint8List? _fileBytes;
   ClassListImportResult? _parseResult;
 
   Future<void> _pickAndParseFile() async {
@@ -49,6 +52,7 @@ class _ImportClassListScreenState extends ConsumerState<ImportClassListScreen> {
 
           setState(() {
             _selectedFileName = file.name;
+            _fileBytes = bytes;
             _parseResult = parsed;
           });
         }
@@ -56,7 +60,7 @@ class _ImportClassListScreenState extends ConsumerState<ImportClassListScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Unable to read this file. Please check that it is a valid CSV, Excel, Word (DOC/DOCX), or PDF file.'),
             backgroundColor: AppColors.absentRed,
           ),
@@ -76,10 +80,21 @@ class _ImportClassListScreenState extends ConsumerState<ImportClassListScreen> {
       final db = ref.read(databaseProvider);
       await db.batchInsertStudents(result.validStudents);
 
+      // Upload raw document to Supabase Storage bucket: lecturers-attendance-files
+      if (_fileBytes != null && _selectedFileName != null) {
+        await StorageService().uploadImportedDocument(_fileBytes!, _selectedFileName!);
+      }
+
+      // Trigger instant database sync to Supabase
+      final user = ref.read(currentUserProvider);
+      if (user != null) {
+        ref.read(syncServiceProvider).syncNow(lecturerId: user.id);
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${result.validCount} students added successfully.'),
+            content: Text('${result.validCount} students added and file backed up to cloud.'),
             backgroundColor: AppColors.presentGreen,
           ),
         );

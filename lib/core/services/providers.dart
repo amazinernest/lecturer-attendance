@@ -51,6 +51,11 @@ class CurrentUserNotifier extends StateNotifier<LecturerUser?> {
     });
   }
 
+  Future<void> updateUserProfile(LecturerUser user) async {
+    state = user;
+    await _db.saveUser(user);
+  }
+
   Future<void> signInWithEmail(String email, String password) async {
     final user = await _authService.signInWithEmailAndPassword(
       email: email,

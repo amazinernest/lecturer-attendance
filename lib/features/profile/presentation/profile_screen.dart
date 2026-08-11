@@ -1,14 +1,77 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/providers.dart';
+import '../../../core/services/storage_service.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  bool _isUploadingAvatar = false;
+
+  Future<void> _pickAndUploadAvatar() async {
+    setState(() => _isUploadingAvatar = true);
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        withData: true,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        final bytes = file.bytes;
+
+        if (bytes != null) {
+          final avatarUrl = await StorageService().uploadAvatar(bytes, file.name);
+
+          if (avatarUrl != null) {
+            final currentUser = ref.read(currentUserProvider);
+            if (currentUser != null) {
+              final updatedUser = currentUser.copyWith(photoUrl: avatarUrl);
+              await ref.read(currentUserProvider.notifier).updateUserProfile(updatedUser);
+
+              // Update photo_url in Supabase profiles table
+              try {
+                await Supabase.instance.client
+                    .from('profiles')
+                    .update({'photo_url': avatarUrl})
+                    .eq('id', currentUser.id);
+              } catch (_) {}
+            }
+
+            messenger.showSnackBar(
+              const SnackBar(
+                content: Text('Profile picture updated successfully!'),
+                backgroundColor: AppColors.presentGreen,
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Avatar upload failed: $e'),
+          backgroundColor: AppColors.absentRed,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isUploadingAvatar = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     final coursesAsync = ref.watch(coursesStreamProvider);
     final syncState = ref.watch(syncServiceProvider).state;
@@ -21,22 +84,48 @@ class ProfileScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Lecturer Profile Card
+          // Lecturer Profile Card with Interactive Avatar Upload
           Card(
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 32,
-                    backgroundColor: AppColors.primaryContainer,
-                    backgroundImage: user?.photoUrl != null ? NetworkImage(user!.photoUrl!) : null,
-                    child: user?.photoUrl == null
-                        ? Text(
-                            (user?.name.isNotEmpty == true) ? user!.name[0].toUpperCase() : 'D',
-                            style: AppTypography.displayLg.copyWith(color: AppColors.onPrimary, fontSize: 24),
-                          )
-                        : null,
+                  Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 34,
+                        backgroundColor: AppColors.primaryContainer,
+                        backgroundImage: user?.photoUrl != null ? NetworkImage(user!.photoUrl!) : null,
+                        child: user?.photoUrl == null
+                            ? Text(
+                                (user?.name.isNotEmpty == true) ? user!.name[0].toUpperCase() : 'D',
+                                style: AppTypography.displayLg.copyWith(color: AppColors.onPrimary, fontSize: 24),
+                              )
+                            : null,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: InkWell(
+                          onTap: _isUploadingAvatar ? null : _pickAndUploadAvatar,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryContainer,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: _isUploadingAvatar
+                                ? const SizedBox(
+                                    width: 12,
+                                    height: 12,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                : const Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -112,40 +201,36 @@ class ProfileScreen extends ConsumerWidget {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.notifications_outlined, color: AppColors.primaryContainer),
-                  title: const Text('Notifications'),
-                  subtitle: const Text('Reminders for scheduled lectures'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {},
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.calendar_month_outlined, color: AppColors.primaryContainer),
-                  title: const Text('Academic Session'),
-                  subtitle: const Text('Current: 2026/2027 First Semester'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {},
+                  leading: const Icon(Icons.cloud_upload_outlined, color: AppColors.primaryContainer),
+                  title: const Text('Cloud Storage Bucket'),
+                  subtitle: const Text('lecturers-attendance-files'),
+                  trailing: const Icon(Icons.check_circle, color: AppColors.presentGreen, size: 20),
                 ),
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.storage_outlined, color: AppColors.primaryContainer),
-                  title: const Text('Data & Storage'),
-                  subtitle: const Text('Offline SQLite DB & Cloud Sync'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {},
+                  title: const Text('Database Sync'),
+                  subtitle: const Text('PostgreSQL & Drift Offline SQLite'),
+                  trailing: const Icon(Icons.sync, color: AppColors.primaryContainer, size: 20),
+                  onTap: () async {
+                    if (user != null) {
+                      await ref.read(syncServiceProvider).syncNow(lecturerId: user.id);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Database sync completed!'),
+                            backgroundColor: AppColors.presentGreen,
+                          ),
+                        );
+                      }
+                    }
+                  },
                 ),
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.privacy_tip_outlined, color: AppColors.primaryContainer),
                   title: const Text('Privacy & Security'),
-                  subtitle: const Text('Lecturer UID Isolation Rules'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {},
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.help_outline, color: AppColors.primaryContainer),
-                  title: const Text('Help & Support'),
+                  subtitle: const Text('Supabase RLS Data Isolation Active'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {},
                 ),

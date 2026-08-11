@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/providers.dart';
+import '../../../core/services/storage_service.dart';
 import '../../../core/utils/attendance_calculator.dart';
 import '../../../core/utils/report_exporter.dart';
 import '../../../shared/models/student.dart';
@@ -151,6 +152,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                                   sessions: sessions,
                                                   records: records,
                                                 );
+
+                                                // Upload generated report backup to Supabase Storage bucket: lecturers-attendance-files
+                                                StorageService().uploadReportDocument(
+                                                  pdfBytes,
+                                                  '${selectedCourse.courseCode}_Attendance_Report.pdf',
+                                                );
+
                                                 await ReportExporter.printOrSharePdf(
                                                   pdfBytes: pdfBytes,
                                                   filename: '${selectedCourse.courseCode}_Attendance_Report',
@@ -188,6 +196,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                                   sessions: sessions,
                                                   records: records,
                                                 );
+
+                                                // Upload generated Excel report backup to Supabase Storage bucket: lecturers-attendance-files
+                                                StorageService().uploadReportDocument(
+                                                  excelBytes,
+                                                  '${selectedCourse.courseCode}_Attendance_Sheet.xlsx',
+                                                );
+
                                                 await ReportExporter.shareFile(
                                                   bytes: excelBytes,
                                                   filename: '${selectedCourse.courseCode}_Attendance_Sheet.xlsx',
