@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/authentication/presentation/splash_screen.dart';
 import '../../features/authentication/presentation/welcome_screen.dart';
+import '../../features/authentication/presentation/login_screen.dart';
+import '../../features/authentication/presentation/register_screen.dart';
+import '../../features/authentication/presentation/forgot_password_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/courses/presentation/courses_screen.dart';
 import '../../features/courses/presentation/create_course_screen.dart';
@@ -12,22 +16,35 @@ import '../../features/students/presentation/import_class_list_screen.dart';
 import '../../features/students/presentation/student_details_screen.dart';
 import '../../features/reports/presentation/reports_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
-import '../services/providers.dart';
 import '../theme/app_theme.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'shell');
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final user = ref.watch(currentUserProvider);
-
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: user != null ? '/dashboard' : '/welcome',
+    initialLocation: '/splash',
     routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: '/welcome',
         builder: (context, state) => const WelcomeScreen(),
+      ),
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
 
       // Main App Shell with Bottom Navigation Bar

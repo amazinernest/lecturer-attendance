@@ -10,5 +10,7 @@ void main() {
       ),
     );
     expect(find.byType(LecturerAttendanceApp), findsOneWidget);
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
   });
 }

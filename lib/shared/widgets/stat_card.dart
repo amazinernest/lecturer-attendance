@@ -5,67 +5,71 @@ class StatCard extends StatelessWidget {
   final String title;
   final String value;
   final IconData icon;
-  final Color? iconColor;
+  final String? subtitle;
 
   const StatCard({
     super.key,
     required this.title,
     required this.value,
     required this.icon,
-    this.iconColor,
+    this.subtitle,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.cardBorder, width: 1),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 18,
-                  color: iconColor ?? AppColors.primaryContainer,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: AppTypography.labelMd.copyWith(
+                  color: AppColors.secondary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                 ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: AppTypography.labelMd.copyWith(
-                      color: AppColors.secondary,
-                      fontSize: 13,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: AppTypography.statLg.copyWith(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Icon(
+                icon,
+                size: 18,
                 color: AppColors.primaryContainer,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: AppTypography.displayLg.copyWith(
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
+              height: 1.0,
+              color: AppColors.onSurface,
+            ),
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              subtitle!,
+              style: AppTypography.labelMd.copyWith(
+                color: AppColors.outline,
+                fontSize: 11,
               ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
 }
-
-// Small helper enum for CrossAxisAlignment to avoid conflict if pdf package imported in same file
-const pwCrossAxisAlignmentStart = CrossAxisAlignment.start;

@@ -38,6 +38,9 @@ dependencies:
   pdf: ^3.11.1
   printing: ^5.14.0
 
+  # Supabase Backend & Auth
+  supabase_flutter: ^2.8.3
+
   # Utilities
   intl: ^0.20.2
   uuid: ^4.5.1
@@ -53,8 +56,19 @@ dev_dependencies:
   freezed: ^2.5.8
   json_serializable: ^6.9.4
   riverpod_generator: ^2.6.4
+  flutter_launcher_icons: ^0.14.3
 
 flutter:
   uses-material-design: true
   assets:
     - assets/images/
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/images/app_icon.png"
+  min_sdk_android: 21
+  macos:
+    generate: true
+    image_path: "assets/images/app_icon.png"
+

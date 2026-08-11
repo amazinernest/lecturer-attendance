@@ -1,22 +1,20 @@
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../shared/models/lecturer_user.dart';
 
 class AuthService {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  fb.FirebaseAuth? get _firebaseAuth {
+  SupabaseClient? get _supabaseClient {
     try {
-      if (Firebase.apps.isNotEmpty) {
-        return fb.FirebaseAuth.instance;
-      }
-    } catch (_) {}
-    return null;
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
   }
 
-  // Demo user fallback when running without configured Google/Firebase credentials
+  // Demo user fallback when running in offline demo mode
   static final LecturerUser demoUser = LecturerUser(
     id: 'lecturer_dr_ernest_001',
     name: 'Dr. Ernest',
@@ -25,66 +23,144 @@ class AuthService {
     createdAt: DateTime(2026, 1, 1),
   );
 
-  /// Signs in with Google and returns LecturerUser profile
+  /// Auth state changes stream from Supabase
+  Stream<AuthState>? get authStateChanges => _supabaseClient?.auth.onAuthStateChange;
+
+  /// Register new user with email & password via Supabase
+  Future<AuthResponse> signUpWithEmailAndPassword({
+    required String email,
+    required String password,
+    required String fullName,
+  }) async {
+    final client = _supabaseClient;
+    if (client == null) {
+      throw Exception('Supabase service is not initialized.');
+    }
+
+    final response = await client.auth.signUp(
+      email: email.trim(),
+      password: password.trim(),
+      data: {
+        'full_name': fullName.trim(),
+        'name': fullName.trim(),
+      },
+      emailRedirectTo: kIsWeb ? null : 'io.supabase.lecturerattendance://login-callback',
+    );
+
+    return response;
+  }
+
+  /// Resends email confirmation link
+  Future<void> resendConfirmationEmail(String email) async {
+    final client = _supabaseClient;
+    if (client == null) {
+      throw Exception('Supabase service is not initialized.');
+    }
+
+    await client.auth.resend(
+      type: OtpType.signup,
+      email: email.trim(),
+      emailRedirectTo: kIsWeb ? null : 'io.supabase.lecturerattendance://login-callback',
+    );
+  }
+
+  /// Sign in existing user with email & password via Supabase
+  Future<LecturerUser> signInWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    final client = _supabaseClient;
+    if (client == null) {
+      throw Exception('Supabase service is not initialized.');
+    }
+
+    final response = await client.auth.signInWithPassword(
+      email: email.trim(),
+      password: password.trim(),
+    );
+
+    final user = response.user;
+    if (user == null) {
+      throw Exception('Sign in failed. Please check your credentials.');
+    }
+
+    return _mapSupabaseUserToLecturerUser(user);
+  }
+
+  /// Send password reset link to user email via Supabase
+  Future<void> sendPasswordReset(String email) async {
+    final client = _supabaseClient;
+    if (client == null) {
+      throw Exception('Supabase service is not initialized.');
+    }
+
+    await client.auth.resetPasswordForEmail(
+      email.trim(),
+      redirectTo: kIsWeb ? null : 'io.supabase.lecturerattendance://reset-callback/',
+    );
+  }
+
+  /// Signs in with Google fallback
   Future<LecturerUser> signInWithGoogle() async {
     try {
-      if (kIsWeb || defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS) {
+      final client = _supabaseClient;
+      if (client != null && (kIsWeb || defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)) {
         final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
         if (googleUser == null) {
           throw Exception('Google Sign-In was cancelled by user.');
         }
 
         final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-        final fb.AuthCredential credential = fb.GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
+        final accessToken = googleAuth.accessToken;
+        final idToken = googleAuth.idToken;
 
-        final auth = _firebaseAuth;
-        if (auth != null) {
-          final fb.UserCredential userCredential = await auth.signInWithCredential(credential);
-          final fb.User? fbUser = userCredential.user;
+        if (idToken != null) {
+          final response = await client.auth.signInWithIdToken(
+            provider: OAuthProvider.google,
+            idToken: idToken,
+            accessToken: accessToken,
+          );
 
-          if (fbUser != null) {
-            return LecturerUser(
-              id: fbUser.uid,
-              name: fbUser.displayName ?? 'Dr. Lecturer',
-              email: fbUser.email ?? 'lecturer@university.edu',
-              photoUrl: fbUser.photoURL,
-              createdAt: fbUser.metadata.creationTime ?? DateTime.now(),
-            );
+          if (response.user != null) {
+            return _mapSupabaseUserToLecturerUser(response.user!);
           }
         }
       }
     } catch (e) {
       if (e.toString().contains('cancelled')) rethrow;
-      debugPrint('Google Auth fallback triggered: $e');
+      debugPrint('Google Auth error: $e');
     }
 
-    // Return production demo profile if Firebase project is not bound yet
     return demoUser;
   }
 
-  /// Get current user or demo user
+  /// Get current authenticated user
   LecturerUser? getCurrentUser() {
-    final auth = _firebaseAuth;
-    final fb.User? currentUser = auth?.currentUser;
+    final client = _supabaseClient;
+    final User? currentUser = client?.auth.currentUser;
     if (currentUser != null) {
-      return LecturerUser(
-        id: currentUser.uid,
-        name: currentUser.displayName ?? 'Dr. Ernest',
-        email: currentUser.email ?? 'ernest.lecturer@university.edu.ng',
-        photoUrl: currentUser.photoURL,
-        createdAt: currentUser.metadata.creationTime ?? DateTime.now(),
-      );
+      return _mapSupabaseUserToLecturerUser(currentUser);
     }
-    return demoUser;
+    return null;
   }
 
+  /// Maps Supabase User object to domain LecturerUser profile
+  LecturerUser _mapSupabaseUserToLecturerUser(User user) {
+    final metaName = user.userMetadata?['full_name'] ?? user.userMetadata?['name'];
+    return LecturerUser(
+      id: user.id,
+      name: metaName as String? ?? user.email?.split('@').first ?? 'Dr. Lecturer',
+      email: user.email ?? '',
+      photoUrl: user.userMetadata?['avatar_url'] as String?,
+      createdAt: DateTime.tryParse(user.createdAt) ?? DateTime.now(),
+    );
+  }
+
+  /// Sign out current user
   Future<void> signOut() async {
     try {
       await _googleSignIn.signOut();
-      await _firebaseAuth?.signOut();
+      await _supabaseClient?.auth.signOut();
     } catch (_) {}
   }
 }

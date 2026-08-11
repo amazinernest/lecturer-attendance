@@ -12,10 +12,10 @@ class WelcomeScreen extends ConsumerStatefulWidget {
 }
 
 class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
-  bool _isLoading = false;
+  bool _isGoogleLoading = false;
 
   Future<void> _handleGoogleSignIn() async {
-    setState(() => _isLoading = true);
+    setState(() => _isGoogleLoading = true);
     try {
       await ref.read(currentUserProvider.notifier).signInWithGoogle();
       if (mounted) {
@@ -31,7 +31,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _isGoogleLoading = false);
     }
   }
 
@@ -51,22 +51,22 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               // Academic Logo Icon
               Center(
                 child: Container(
-                  width: 100,
-                  height: 100,
+                  width: 96,
+                  height: 96,
                   decoration: BoxDecoration(
                     color: AppColors.primaryContainer,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primaryContainer.withValues(alpha: 0.3),
-                        blurRadius: 16,
+                        color: AppColors.primaryContainer.withValues(alpha: 0.25),
+                        blurRadius: 18,
                         offset: const Offset(0, 8),
                       ),
                     ],
                   ),
                   child: const Icon(
                     Icons.how_to_reg_rounded,
-                    size: 52,
+                    size: 48,
                     color: AppColors.onPrimary,
                   ),
                 ),
@@ -78,63 +78,76 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               Text(
                 'Lecturer Attendance',
                 style: AppTypography.displayLg.copyWith(
-                  fontSize: 32,
+                  fontSize: 30,
                   fontWeight: FontWeight.w800,
                   color: AppColors.primaryContainer,
                 ),
                 textAlign: TextAlign.center,
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
               Text(
-                'Simple attendance management for university lecturers.',
+                'Fast, seamless attendance tracking for university lecturers.',
                 style: AppTypography.bodyMd.copyWith(
                   color: AppColors.secondary,
-                  fontSize: 16,
+                  fontSize: 15,
                 ),
                 textAlign: TextAlign.center,
               ),
 
-              const Spacer(flex: 3),
+              const Spacer(flex: 2),
 
-              // Continue with Google Button
+              // Create Account Button
               ElevatedButton(
-                onPressed: _isLoading ? null : _handleGoogleSignIn,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryContainer,
-                  foregroundColor: AppColors.onPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.onPrimary),
-                        ),
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.g_mobiledata_rounded, size: 28, color: AppColors.onPrimary),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Continue with Google',
-                            style: AppTypography.titleMd.copyWith(
-                              color: AppColors.onPrimary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
+                onPressed: () => context.push('/register'),
+                child: const Text('Create Account'),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Sign In Button
+              OutlinedButton(
+                onPressed: () => context.push('/login'),
+                child: const Text('Sign In with Email'),
               ),
 
               const SizedBox(height: 16),
+
+              Row(
+                children: [
+                  const Expanded(child: Divider()),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text('OR', style: AppTypography.labelMd.copyWith(color: AppColors.outline, fontSize: 12)),
+                  ),
+                  const Expanded(child: Divider()),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // Continue with Google Button
+              TextButton.icon(
+                onPressed: _isGoogleLoading ? null : _handleGoogleSignIn,
+                icon: _isGoogleLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.g_mobiledata_rounded, size: 26, color: AppColors.primaryContainer),
+                label: Text(
+                  'Continue with Google',
+                  style: AppTypography.labelMd.copyWith(
+                    color: AppColors.primaryContainer,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
 
               Text(
                 'Works offline • Automatic Cloud Sync',
@@ -145,7 +158,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 textAlign: TextAlign.center,
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
             ],
           ),
         ),

@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/providers.dart';
 import '../../../core/utils/attendance_calculator.dart';
 import '../../../core/utils/sample_data.dart';
 import '../../../shared/models/course.dart';
 import '../../../shared/models/attendance_record.dart';
+import '../../../shared/models/attendance_session.dart';
 import '../../../shared/widgets/stat_card.dart';
 import '../../../shared/widgets/course_card.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/sync_status_badge.dart';
+import '../../../shared/widgets/quick_action_hub.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -45,9 +48,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ? 'Good afternoon'
             : 'Good evening';
 
+    final todayFormatted = DateFormat('EEEE, d MMMM').format(DateTime.now());
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        backgroundColor: AppColors.surface,
+        elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -60,8 +67,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
             const SizedBox(height: 2),
             Text(
-              user?.email ?? '',
-              style: AppTypography.labelMd.copyWith(fontSize: 12),
+              todayFormatted,
+              style: AppTypography.labelMd.copyWith(
+                fontSize: 12,
+                color: AppColors.secondary,
+              ),
             ),
           ],
         ),
@@ -93,9 +103,90 @@ class _DashboardContent extends ConsumerWidget {
 
   const _DashboardContent({required this.courses});
 
+  void _showCoursePickerModal(BuildContext context, String title, Function(Course) onSelect) {
+    if (courses.isEmpty) {
+      context.push('/courses/create');
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTypography.titleMd.copyWith(fontSize: 18, fontWeight: FontWeight.w700),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: courses.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final c = courses[index];
+                      return ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryContainer.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            c.courseCode,
+                            style: AppTypography.labelMd.copyWith(
+                              color: AppColors.primaryContainer,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        title: Text(
+                          c.courseTitle,
+                          style: AppTypography.titleMd.copyWith(fontSize: 15),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text('${c.department} • ${c.level}'),
+                        trailing: const Icon(Icons.chevron_right, size: 18),
+                        onTap: () {
+                          Navigator.pop(context);
+                          onSelect(c);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final db = ref.watch(databaseProvider);
+    final user = ref.watch(currentUserProvider);
 
     return FutureBuilder(
       future: Future.wait(courses.map((c) async {
@@ -129,6 +220,7 @@ class _DashboardContent extends ConsumerWidget {
           'studentCount': students.length,
           'classesHeld': sessions.length,
           'avgPct': summary.averageAttendancePercentage,
+          'sessions': sessions,
         };
       })),
       builder: (context, snapshot) {
@@ -144,11 +236,29 @@ class _DashboardContent extends ConsumerWidget {
         int totalClassesHeldCount = 0;
         double globalPctSum = 0.0;
 
+        final allRecentSessions = <Map<String, dynamic>>[];
+
         for (final data in courseDataList) {
+          final c = data['course'] as Course;
+          final sList = data['sessions'] as List<AttendanceSession>;
           totalStudentsCount += data['studentCount'] as int;
           totalClassesHeldCount += data['classesHeld'] as int;
           globalPctSum += data['avgPct'] as double;
+
+          for (final s in sList) {
+            allRecentSessions.add({
+              'session': s,
+              'courseCode': c.courseCode,
+              'courseId': c.id,
+            });
+          }
         }
+
+        allRecentSessions.sort((a, b) {
+          final dateA = (a['session'] as AttendanceSession).date;
+          final dateB = (b['session'] as AttendanceSession).date;
+          return dateB.compareTo(dateA);
+        });
 
         final globalAvgAttendance = totalCoursesCount > 0
             ? (globalPctSum / totalCoursesCount)
@@ -156,7 +266,6 @@ class _DashboardContent extends ConsumerWidget {
 
         return RefreshIndicator(
           onRefresh: () async {
-            final user = ref.read(currentUserProvider);
             if (user != null) {
               await ref.read(syncServiceProvider).syncNow(lecturerId: user.id);
             }
@@ -164,7 +273,29 @@ class _DashboardContent extends ConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // Stat Cards 2x2 Grid
+              // Quick Actions Bar
+              QuickActionHub(
+                onTakeAttendance: () {
+                  _showCoursePickerModal(
+                    context,
+                    'Select Course for Attendance',
+                    (c) => context.push('/courses/${c.id}/record'),
+                  );
+                },
+                onAddCourse: () => context.push('/courses/create'),
+                onImportRoster: () {
+                  _showCoursePickerModal(
+                    context,
+                    'Select Course for Roster Import',
+                    (c) => context.push('/courses/${c.id}/import'),
+                  );
+                },
+                onViewAnalytics: () => context.go('/reports'),
+              ),
+
+              const SizedBox(height: 20),
+
+              // 2x2 Overview Metrics Grid
               GridView.count(
                 crossAxisCount: 2,
                 shrinkWrap: true,
@@ -174,12 +305,12 @@ class _DashboardContent extends ConsumerWidget {
                 childAspectRatio: 1.5,
                 children: [
                   StatCard(
-                    title: 'Courses',
+                    title: 'Active Courses',
                     value: '$totalCoursesCount',
                     icon: Icons.book_outlined,
                   ),
                   StatCard(
-                    title: 'Students',
+                    title: 'Total Students',
                     value: '$totalStudentsCount',
                     icon: Icons.people_outline,
                   ),
@@ -189,15 +320,71 @@ class _DashboardContent extends ConsumerWidget {
                     icon: Icons.event_note_outlined,
                   ),
                   StatCard(
-                    title: 'Average Attendance',
+                    title: 'Avg Attendance',
                     value: '${globalAvgAttendance.toStringAsFixed(0)}%',
                     icon: Icons.pie_chart_outline,
-                    iconColor: AppColors.presentGreen,
                   ),
                 ],
               ),
 
               const SizedBox(height: 24),
+
+              // Recent Sessions Section (if any sessions exist)
+              if (allRecentSessions.isNotEmpty) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Recent Sessions',
+                      style: AppTypography.headlineLg.copyWith(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                    TextButton(
+                      onPressed: () => context.go('/reports'),
+                      child: const Text('View All'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ...allRecentSessions.take(3).map((data) {
+                  final sess = data['session'] as AttendanceSession;
+                  final cCode = data['courseCode'] as String;
+                  final cId = data['courseId'] as String;
+                  final dateStr = DateFormat('MMM d, yyyy').format(sess.date);
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.cardBorder),
+                    ),
+                    child: ListTile(
+                      onTap: () => context.push('/courses/$cId/record?sessionId=${sess.id}'),
+                      leading: CircleAvatar(
+                        radius: 18,
+                        backgroundColor: AppColors.primaryContainer.withValues(alpha: 0.08),
+                        child: Text(
+                          '#${sess.classNumber}',
+                          style: AppTypography.labelMd.copyWith(
+                            color: AppColors.primaryContainer,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        '$cCode - ${sess.topic}',
+                        style: AppTypography.titleMd.copyWith(fontSize: 14),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(dateStr, style: const TextStyle(fontSize: 12, color: AppColors.secondary)),
+                      trailing: const Icon(Icons.chevron_right, size: 18, color: AppColors.secondary),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 20),
+              ],
 
               // My Courses Section Header
               Row(
@@ -205,12 +392,12 @@ class _DashboardContent extends ConsumerWidget {
                 children: [
                   Text(
                     'My Courses',
-                    style: AppTypography.headlineLg.copyWith(fontSize: 20),
+                    style: AppTypography.headlineLg.copyWith(fontSize: 18, fontWeight: FontWeight.w600),
                   ),
                   TextButton.icon(
                     onPressed: () => context.push('/courses/create'),
                     icon: const Icon(Icons.add, size: 18),
-                    label: const Text('+ Add Course'),
+                    label: const Text('Add Course'),
                   ),
                 ],
               ),

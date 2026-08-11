@@ -26,15 +26,22 @@ class AppColors {
   static const Color outlineVariant = Color(0xFFC6C5D4);
 
   // Status & Attendance Indicators
-  static const Color presentGreen = Color(0xFF2E7D32);
-  static const Color presentBg = Color(0xFFE8F5E9);
-  static const Color absentRed = Color(0xFFC62828);
-  static const Color absentBg = Color(0xFFFFEBEE);
-  static const Color warningOrange = Color(0xFFEF6C00);
-  static const Color warningBg = Color(0xFFFFF3E0);
+  static const Color presentGreen = Color(0xFF15803D);
+  static const Color presentBg = Color(0xFFF0FDF4);
+  static const Color absentRed = Color(0xFFB91C1C);
+  static const Color absentBg = Color(0xFFFEF2F2);
+  static const Color warningOrange = Color(0xFFC2410C);
+  static const Color warningBg = Color(0xFFFFF7ED);
 
   // Card Borders & Shadows
-  static const Color cardBorder = Color(0xFFE0E0E0);
+  static const Color cardBorder = Color(0xFFE2E8F0);
+  static const Color shadowColor = Color(0x08000000);
+
+  // Clean Professional Accents
+  static const Color slateBg = Color(0xFFF8FAFC);
+  static const Color slateBorder = Color(0xFFE2E8F0);
+  static const Color slateHeader = Color(0xFF0F172A);
+  static const Color slateSubtext = Color(0xFF64748B);
 }
 
 class AppTypography {
