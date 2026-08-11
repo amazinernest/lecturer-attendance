@@ -19,88 +19,136 @@ class QuickActionHub extends StatelessWidget {
   Widget build(BuildContext context) {
     final actions = [
       _ActionData(
-        label: 'Mark Attendance',
-        icon: Icons.fact_check_outlined,
+        label: 'Mark Class',
+        subtitle: 'Record attendance',
+        icon: Icons.fact_check_rounded,
+        bgColor: const Color(0xFFEEF2FF),
+        iconColor: const Color(0xFF4F46E5),
         onTap: onTakeAttendance,
       ),
       _ActionData(
         label: 'Add Course',
-        icon: Icons.add_circle_outline_rounded,
+        subtitle: 'New subject',
+        icon: Icons.post_add_rounded,
+        bgColor: const Color(0xFFECFDF5),
+        iconColor: const Color(0xFF059669),
         onTap: onAddCourse,
       ),
       _ActionData(
-        label: 'Import Class',
-        icon: Icons.file_upload_outlined,
+        label: 'Import Roster',
+        subtitle: 'CSV, Excel, PDF',
+        icon: Icons.upload_file_rounded,
+        bgColor: const Color(0xFFFFFBEB),
+        iconColor: const Color(0xFFD97706),
         onTap: onImportRoster,
       ),
       _ActionData(
         label: 'Reports',
-        icon: Icons.bar_chart_outlined,
+        subtitle: 'PDF & Analytics',
+        icon: Icons.insights_rounded,
+        bgColor: const Color(0xFFFFF1F2),
+        iconColor: const Color(0xFFE11D48),
         onTap: onViewAnalytics,
       ),
     ];
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
-      ),
-      child: Row(
-        children: actions.map((item) {
-          return Expanded(
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 2.1,
+      children: actions.map((item) {
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.cardBorder),
+            boxShadow: [
+              BoxShadow(
+                color: item.iconColor.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
             child: InkWell(
               onTap: item.onTap,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                padding: const EdgeInsets.all(12),
+                child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryContainer.withValues(alpha: 0.07),
+                        color: item.bgColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         item.icon,
-                        color: AppColors.primaryContainer,
+                        color: item.iconColor,
                         size: 22,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      item.label,
-                      style: AppTypography.labelMd.copyWith(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.onSurface,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            item.label,
+                            style: AppTypography.titleMd.copyWith(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.onSurface,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            item.subtitle,
+                            style: AppTypography.labelMd.copyWith(
+                              fontSize: 11,
+                              color: AppColors.secondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
             ),
-          );
-        }).toList(),
-      ),
+          ),
+        );
+      }).toList(),
     );
   }
 }
 
 class _ActionData {
   final String label;
+  final String subtitle;
   final IconData icon;
+  final Color bgColor;
+  final Color iconColor;
   final VoidCallback onTap;
 
   _ActionData({
     required this.label,
+    required this.subtitle,
     required this.icon,
+    required this.bgColor,
+    required this.iconColor,
     required this.onTap,
   });
 }

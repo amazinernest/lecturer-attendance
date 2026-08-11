@@ -32,15 +32,22 @@ class CourseCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.cardBorder),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -51,34 +58,40 @@ class CourseCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryContainer.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(6),
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text(
-                        course.courseCode,
-                        style: AppTypography.labelMd.copyWith(
-                          color: AppColors.primaryContainer,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                        ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.school_rounded, size: 14, color: Color(0xFF4F46E5)),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${course.courseCode} • ${course.level}',
+                            style: AppTypography.labelMd.copyWith(
+                              color: const Color(0xFF1E293B),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: isGoodAttendance ? AppColors.presentBg : AppColors.warningBg,
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             '${averageAttendancePct.toStringAsFixed(0)}% avg',
                             style: AppTypography.labelMd.copyWith(
                               color: isGoodAttendance ? AppColors.presentGreen : AppColors.warningOrange,
                               fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
@@ -96,14 +109,14 @@ class CourseCard extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
 
                 // Course Title
                 Text(
                   course.courseTitle,
                   style: AppTypography.titleMd.copyWith(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.onSurface,
                   ),
                   maxLines: 2,
@@ -115,32 +128,46 @@ class CourseCard extends StatelessWidget {
                 // Student & Class metrics
                 Row(
                   children: [
-                    const Icon(Icons.people_outline, size: 15, color: AppColors.secondary),
-                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(Icons.people_alt_outlined, size: 14, color: Color(0xFF64748B)),
+                    ),
+                    const SizedBox(width: 6),
                     Text(
                       '$studentCount Students',
-                      style: AppTypography.labelMd.copyWith(color: AppColors.secondary, fontSize: 13),
+                      style: AppTypography.labelMd.copyWith(color: AppColors.secondary, fontSize: 13, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(width: 16),
-                    const Icon(Icons.calendar_today_outlined, size: 15, color: AppColors.secondary),
-                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(Icons.event_available_rounded, size: 14, color: Color(0xFF64748B)),
+                    ),
+                    const SizedBox(width: 6),
                     Text(
                       '$classesHeldCount / ${course.expectedClasses} Classes',
-                      style: AppTypography.labelMd.copyWith(color: AppColors.secondary, fontSize: 13),
+                      style: AppTypography.labelMd.copyWith(color: AppColors.secondary, fontSize: 13, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
 
-                // Clean Linear Progress Bar
+                // Clean Progress Bar
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(6),
                   child: LinearProgressIndicator(
                     value: progressFraction,
-                    minHeight: 5,
-                    backgroundColor: AppColors.surfaceVariant,
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primaryContainer),
+                    minHeight: 6,
+                    backgroundColor: const Color(0xFFF1F5F9),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF4F46E5)),
                   ),
                 ),
               ],
