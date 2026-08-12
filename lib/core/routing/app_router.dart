@@ -18,8 +18,10 @@ import '../../features/reports/presentation/reports_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../theme/app_theme.dart';
 
-final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
-final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'shell');
+final GlobalKey<NavigatorState> _rootNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'root');
+final GlobalKey<NavigatorState> _shellNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'shell');
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -47,10 +49,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ForgotPasswordScreen(),
       ),
 
-      // Main App Shell with Bottom Navigation Bar
+      // Main App Shell with Premium Bottom Navigation
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
-        builder: (context, state, child) => ScaffoldWithBottomNavBar(child: child),
+        builder: (context, state, child) =>
+            ScaffoldWithBottomNavBar(child: child),
         routes: [
           GoRoute(
             path: '/dashboard',
@@ -91,7 +94,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final courseId = state.pathParameters['id']!;
           final sessionId = state.uri.queryParameters['sessionId'];
-          return RecordAttendanceScreen(courseId: courseId, existingSessionId: sessionId);
+          return RecordAttendanceScreen(
+              courseId: courseId, existingSessionId: sessionId);
         },
       ),
       GoRoute(
@@ -129,7 +133,7 @@ class ScaffoldWithBottomNavBar extends StatelessWidget {
     return 0;
   }
 
-  void _onItemTapped(int index, BuildContext context) {
+  void _onDestinationSelected(int index, BuildContext context) {
     switch (index) {
       case 0:
         context.go('/dashboard');
@@ -152,33 +156,49 @@ class ScaffoldWithBottomNavBar extends StatelessWidget {
 
     return Scaffold(
       body: child,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: selectedIndex,
-        onTap: (index) => _onItemTapped(index, context),
-        selectedItemColor: AppColors.primaryContainer,
-        unselectedItemColor: AppColors.secondary,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
-            label: 'Home',
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          border: Border(
+            top: BorderSide(color: AppColors.border, width: 1),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.book_outlined),
-            activeIcon: Icon(Icons.book),
-            label: 'Courses',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assessment_outlined),
-            activeIcon: Icon(Icons.assessment),
-            label: 'Reports',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 20,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: NavigationBar(
+          selectedIndex: selectedIndex,
+          onDestinationSelected: (index) =>
+              _onDestinationSelected(index, context),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home_rounded),
+              label: 'Home',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.library_books_outlined),
+              selectedIcon: Icon(Icons.library_books_rounded),
+              label: 'Courses',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.bar_chart_outlined),
+              selectedIcon: Icon(Icons.bar_chart_rounded),
+              label: 'Reports',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline_rounded),
+              selectedIcon: Icon(Icons.person_rounded),
+              label: 'Profile',
+            ),
+          ],
+        ),
       ),
     );
   }

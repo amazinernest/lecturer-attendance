@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +14,7 @@ import '../../../shared/widgets/stat_card.dart';
 import '../../../shared/widgets/course_card.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/quick_action_hub.dart';
+import '../../../shared/widgets/skeleton_loader.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -39,23 +41,56 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final coursesAsync = ref.watch(coursesStreamProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.background,
       body: coursesAsync.when(
         data: (courses) {
-          final activeCourses = courses.where((c) => c.status == CourseStatus.active).toList();
+          final activeCourses =
+              courses.where((c) => c.status == CourseStatus.active).toList();
           return _DashboardContent(courses: activeCourses);
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primaryContainer),
-        ),
+        loading: () => const _DashboardSkeleton(),
         error: (err, stack) => Center(
-          child: Text('Error loading courses: $err'),
+          child: Text('Error loading dashboard: $err'),
         ),
       ),
     );
   }
 }
 
+// ── Skeleton Loading State ───────────────────────────────────────────────────
+class _DashboardSkeleton extends StatelessWidget {
+  const _DashboardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Header skeleton
+        const DashboardHeaderSkeleton(),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                const SizedBox(height: 12),
+                const StatCardRowSkeleton(),
+                const SizedBox(height: 12),
+                const StatCardRowSkeleton(),
+                const SizedBox(height: 24),
+                ...List.generate(3, (_) => const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: CourseCardSkeleton(),
+                )),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Dashboard Content ─────────────────────────────────────────────────────────
 class _DashboardContent extends ConsumerStatefulWidget {
   final List<Course> courses;
 
@@ -68,7 +103,8 @@ class _DashboardContent extends ConsumerStatefulWidget {
 class _DashboardContentState extends ConsumerState<_DashboardContent> {
   int _selectedTab = 0; // 0 = Courses, 1 = Recent Sessions
 
-  void _showCoursePickerModal(BuildContext context, String title, Function(Course) onSelect) {
+  void _showCoursePickerModal(
+      BuildContext context, String title, Function(Course) onSelect) {
     if (widget.courses.isEmpty) {
       context.push('/courses/create');
       return;
@@ -76,32 +112,42 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      isScrollControlled: true,
       builder: (context) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Handle bar
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                  ),
+                ),
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       title,
-                      style: AppTypography.titleMd.copyWith(fontSize: 18, fontWeight: FontWeight.w700),
+                      style: AppTypography.headlineMd,
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close, size: 20),
+                      icon: const Icon(Icons.close_rounded, size: 20),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Flexible(
                   child: ListView.separated(
                     shrinkWrap: true,
@@ -111,27 +157,33 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
                       final c = widget.courses[index];
                       return ListTile(
                         leading: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryContainer.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(6),
+                            color: AppColors.accentLight,
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             c.courseCode,
                             style: AppTypography.labelMd.copyWith(
-                              color: AppColors.primaryContainer,
+                              color: AppColors.accent,
                               fontWeight: FontWeight.w700,
+                              fontSize: 12,
                             ),
                           ),
                         ),
                         title: Text(
                           c.courseTitle,
-                          style: AppTypography.titleMd.copyWith(fontSize: 15),
+                          style: AppTypography.titleSm,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        subtitle: Text('${c.department} • ${c.level}'),
-                        trailing: const Icon(Icons.chevron_right, size: 18),
+                        subtitle: Text(
+                          '${c.department} · ${c.level}',
+                          style: AppTypography.caption,
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded,
+                            size: 18, color: AppColors.textMuted),
                         onTap: () {
                           Navigator.pop(context);
                           onSelect(c);
@@ -153,14 +205,15 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
     final db = ref.watch(databaseProvider);
     final user = ref.watch(currentUserProvider);
 
-    final greetingHour = DateTime.now().hour;
-    final timeGreeting = greetingHour < 12
-        ? 'Good Morning,'
-        : greetingHour < 17
-            ? 'Good Afternoon,'
-            : 'Good Evening,';
+    final hour = DateTime.now().hour;
+    final greeting = hour < 12
+        ? 'Good Morning'
+        : hour < 17
+            ? 'Good Afternoon'
+            : 'Good Evening';
 
-    final todayFormatted = DateFormat('EEEE, d MMMM yyyy').format(DateTime.now());
+    final dateStr =
+        DateFormat('EEEE, d MMMM').format(DateTime.now());
 
     return FutureBuilder(
       future: Future.wait(widget.courses.map((c) async {
@@ -170,7 +223,8 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
 
         final recordMap = <String, Map<String, bool>>{};
         for (final r in records) {
-          recordMap.putIfAbsent(r.attendanceSessionId, () => {})[r.studentId] = (r.status == AttendanceStatus.present);
+          recordMap.putIfAbsent(r.attendanceSessionId,
+              () => {})[r.studentId] = (r.status == AttendanceStatus.present);
         }
 
         final studentStatsList = students.map((s) {
@@ -199,25 +253,25 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
       })),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator(color: AppColors.primaryContainer));
+          return const _DashboardSkeleton();
         }
 
-        final courseDataList = snapshot.data as List<Map<String, dynamic>>;
+        final courseDataList =
+            snapshot.data as List<Map<String, dynamic>>;
 
-        // Dynamic Global Metrics
-        final totalCoursesCount = widget.courses.length;
-        int totalStudentsCount = 0;
-        int totalClassesHeldCount = 0;
-        double globalPctSum = 0.0;
-
+        // Global metrics
+        final totalCourses = widget.courses.length;
+        int totalStudents = 0;
+        int totalClasses = 0;
+        double pctSum = 0.0;
         final allRecentSessions = <Map<String, dynamic>>[];
 
         for (final data in courseDataList) {
           final c = data['course'] as Course;
           final sList = data['sessions'] as List<AttendanceSession>;
-          totalStudentsCount += data['studentCount'] as int;
-          totalClassesHeldCount += data['classesHeld'] as int;
-          globalPctSum += data['avgPct'] as double;
+          totalStudents += data['studentCount'] as int;
+          totalClasses += data['classesHeld'] as int;
+          pctSum += data['avgPct'] as double;
 
           for (final s in sList) {
             allRecentSessions.add({
@@ -234,352 +288,408 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
           return dateB.compareTo(dateA);
         });
 
-        final globalAvgAttendance = totalCoursesCount > 0
-            ? (globalPctSum / totalCoursesCount)
-            : 0.0;
+        final globalAvg =
+            totalCourses > 0 ? (pctSum / totalCourses) : 0.0;
+
+        final avgColor = globalAvg >= 75
+            ? AppColors.success
+            : globalAvg >= 50
+                ? AppColors.warning
+                : AppColors.error;
+        final avgBg = globalAvg >= 75
+            ? AppColors.successBg
+            : globalAvg >= 50
+                ? AppColors.warningBg
+                : AppColors.errorBg;
 
         return RefreshIndicator(
+          color: AppColors.accent,
           onRefresh: () async {
             if (user != null) {
-              await ref.read(syncServiceProvider).syncNow(lecturerId: user.id);
+              await ref
+                  .read(syncServiceProvider)
+                  .syncNow(lecturerId: user.id);
             }
           },
-          child: SingleChildScrollView(
+          child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 1. RICH DEEP GRADIENT HERO HEADER (Inspired by Image 2)
-                Container(
-                  padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 16, 20, 24),
+            slivers: [
+              // ── HEADER ─────────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF0F172A), // Deep Slate Navy
-                        Color(0xFF1E1B4B), // Rich Indigo Accent
-                      ],
+                      colors: [Color(0xFF0A1628), Color(0xFF1A3A6B)],
                     ),
-                    borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color(0x20000000),
-                        blurRadius: 16,
-                        offset: Offset(0, 8),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.vertical(
+                        bottom: Radius.circular(28)),
                   ),
-                  child: Column(
-                    children: [
-                      // Header User Row
-                      Row(
+                  child: SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          InkWell(
-                            onTap: () => context.push('/profile'),
-                            borderRadius: BorderRadius.circular(24),
-                            child: Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
-                              ),
-                              child: CircleAvatar(
-                                radius: 22,
-                                backgroundColor: const Color(0xFF312E81),
-                                backgroundImage: user?.photoUrl != null ? NetworkImage(user!.photoUrl!) : null,
-                                child: user?.photoUrl == null
-                                    ? Text(
-                                        (user?.name.isNotEmpty == true) ? user!.name[0].toUpperCase() : 'D',
-                                        style: AppTypography.titleMd.copyWith(color: Colors.white, fontSize: 16),
-                                      )
-                                    : null,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  timeGreeting,
-                                  style: AppTypography.labelMd.copyWith(
-                                    color: Colors.white70,
-                                    fontSize: 13,
+                          // User row
+                          Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () => context.go('/profile'),
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.3),
+                                        width: 2),
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 21,
+                                    backgroundColor:
+                                        AppColors.navyLight,
+                                    backgroundImage: user?.photoUrl != null
+                                        ? NetworkImage(user!.photoUrl!)
+                                        : null,
+                                    child: user?.photoUrl == null
+                                        ? Text(
+                                            (user?.name.isNotEmpty == true)
+                                                ? user!.name[0].toUpperCase()
+                                                : 'L',
+                                            style: AppTypography.titleMd
+                                                .copyWith(
+                                                    color: Colors.white,
+                                                    fontSize: 15),
+                                          )
+                                        : null,
                                   ),
                                 ),
-                                Text(
-                                  user?.name ?? 'Dr. Ernest',
-                                  style: AppTypography.headlineLg.copyWith(
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      greeting,
+                                      style: AppTypography.bodyMd.copyWith(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.65),
+                                          fontSize: 12),
+                                    ),
+                                    Text(
+                                      user?.name ?? 'Dr. Ernest',
+                                      style: AppTypography.headlineMd
+                                          .copyWith(
+                                        color: Colors.white,
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Notification badge
+                              Container(
+                                padding: const EdgeInsets.all(9),
+                                decoration: BoxDecoration(
+                                  color:
+                                      Colors.white.withValues(alpha: 0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                    Icons.notifications_none_rounded,
                                     color: Colors.white,
-                                    fontSize: 20,
+                                    size: 20),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // Date + term chip
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color:
+                                      Colors.white.withValues(alpha: 0.1),
+                                  borderRadius:
+                                      BorderRadius.circular(100),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.calendar_today_rounded,
+                                        size: 12,
+                                        color: Colors.white
+                                            .withValues(alpha: 0.7)),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      dateStr,
+                                      style: AppTypography.caption.copyWith(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.9),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color:
+                                      AppColors.accent.withValues(alpha: 0.3),
+                                  borderRadius:
+                                      BorderRadius.circular(100),
+                                ),
+                                child: Text(
+                                  'Academic 2026',
+                                  style: AppTypography.caption.copyWith(
+                                    color: Colors.white,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                          // Notification Icon with Badge
-                          Stack(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 22),
-                              ),
-                              Positioned(
-                                top: 8,
-                                right: 8,
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFF97316),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
 
-                      const SizedBox(height: 20),
+                          const SizedBox(height: 24),
 
-                      // Today's Date Banner Ribbon
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
+                          // Featured: Avg attendance card
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.09),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                  color:
+                                      Colors.white.withValues(alpha: 0.12)),
+                            ),
+                            child: Row(
                               children: [
-                                const Icon(Icons.calendar_today_rounded, size: 14, color: Colors.white70),
-                                const SizedBox(width: 8),
-                                Text(
-                                  todayFormatted,
-                                  style: AppTypography.labelMd.copyWith(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'AVERAGE ATTENDANCE',
+                                        style: AppTypography.caption.copyWith(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.6),
+                                          letterSpacing: 0.8,
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        '${globalAvg.toStringAsFixed(0)}%',
+                                        style:
+                                            AppTypography.statXL.copyWith(
+                                          color: Colors.white,
+                                          fontSize: 48,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Across $totalCourses active courses',
+                                        style: AppTypography.bodyMd.copyWith(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.6),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
+                                // Visual arc indicator
+                                _AttendanceArc(percentage: globalAvg),
                               ],
                             ),
-                            Text(
-                              'Term 2026',
-                              style: AppTypography.labelMd.copyWith(color: const Color(0xFF818CF8), fontSize: 12, fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // ── BODY ──────────────────────────────────────────────────
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    // Stat cards grid
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio: 1.55,
+                      children: [
+                        StatCard(
+                          title: 'COURSES',
+                          value: '$totalCourses',
+                          subtitle: 'active',
+                          backgroundColor: AppColors.accentLight,
+                          waveColor: AppColors.accent,
+                          textColor: AppColors.navyMid,
+                          onTap: () => context.go('/courses'),
+                        ),
+                        StatCard(
+                          title: 'STUDENTS',
+                          value: '$totalStudents',
+                          subtitle: 'enrolled',
+                          backgroundColor: const Color(0xFFEFF8FF),
+                          waveColor: const Color(0xFF0EA5E9),
+                          textColor: const Color(0xFF0C4A6E),
+                          onTap: () {},
+                        ),
+                        StatCard(
+                          title: 'CLASSES HELD',
+                          value: '$totalClasses',
+                          subtitle: 'sessions',
+                          backgroundColor: AppColors.warningBg,
+                          waveColor: AppColors.warning,
+                          textColor: const Color(0xFF78350F),
+                          onTap: () => context.go('/reports'),
+                        ),
+                        StatCard(
+                          title: 'AVG ATTEND.',
+                          value: '${globalAvg.toStringAsFixed(0)}%',
+                          subtitle: globalAvg >= 75 ? 'on track' : 'needs attention',
+                          backgroundColor: avgBg,
+                          waveColor: avgColor,
+                          textColor: avgColor,
+                          onTap: () => context.go('/reports'),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Quick actions
+                    _SectionHeader(
+                      title: 'Quick Actions',
+                      trailing: null,
+                    ),
+                    const SizedBox(height: 12),
+                    QuickActionHub(
+                      onTakeAttendance: () => _showCoursePickerModal(
+                        context,
+                        'Select Course',
+                        (c) => context.push('/courses/${c.id}/record'),
+                      ),
+                      onAddCourse: () => context.push('/courses/create'),
+                      onImportRoster: () => _showCoursePickerModal(
+                        context,
+                        'Import Roster For',
+                        (c) => context.push('/courses/${c.id}/import'),
+                      ),
+                      onViewAnalytics: () => context.go('/reports'),
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    // Tab filter + content
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            _TabPill(
+                              label: 'Courses',
+                              count: widget.courses.length,
+                              isSelected: _selectedTab == 0,
+                              onTap: () => setState(() => _selectedTab = 0),
+                            ),
+                            const SizedBox(width: 8),
+                            _TabPill(
+                              label: 'Recent',
+                              count: allRecentSessions.length,
+                              isSelected: _selectedTab == 1,
+                              onTap: () => setState(() => _selectedTab = 1),
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 2. OVERVIEW STAT CARDS GRID WITH SPARKLINE WAVES (Inspired by Image 1)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Overview',
-                            style: AppTypography.headlineLg.copyWith(fontSize: 20, fontWeight: FontWeight.w800),
+                        TextButton.icon(
+                          onPressed: () => context.push('/courses/create'),
+                          icon: const Icon(Icons.add_rounded, size: 15),
+                          label: const Text('Add'),
+                          style: TextButton.styleFrom(
+                            textStyle: AppTypography.labelMd.copyWith(
+                                fontSize: 13, fontWeight: FontWeight.w700),
                           ),
-                          Text(
-                            'Academic Year',
-                            style: AppTypography.labelMd.copyWith(color: AppColors.secondary, fontSize: 12),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      GridView.count(
-                        crossAxisCount: 2,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: 1.45,
-                        children: [
-                          StatCard(
-                            title: 'Active Courses',
-                            value: '$totalCoursesCount',
-                            backgroundColor: const Color(0xFFF3E8FF), // Soft Lavender
-                            waveColor: const Color(0xFF9333EA),
-                            textColor: const Color(0xFF3B0764),
-                            onTap: () => context.push('/courses/create'),
-                          ),
-                          StatCard(
-                            title: 'Total Students',
-                            value: '$totalStudentsCount',
-                            backgroundColor: const Color(0xFFE0F2FE), // Soft Cyan
-                            waveColor: const Color(0xFF0284C7),
-                            textColor: const Color(0xFF0C4A6E),
-                            onTap: () {},
-                          ),
-                          StatCard(
-                            title: 'Classes Held',
-                            value: '$totalClassesHeldCount',
-                            backgroundColor: const Color(0xFFFFEDD5), // Soft Peach/Orange
-                            waveColor: const Color(0xFFEA580C),
-                            textColor: const Color(0xFF7C2D12),
-                            onTap: () => context.go('/reports'),
-                          ),
-                          StatCard(
-                            title: 'Avg Attendance',
-                            value: '${globalAvgAttendance.toStringAsFixed(0)}%',
-                            backgroundColor: const Color(0xFFDCFCE7), // Soft Mint
-                            waveColor: const Color(0xFF16A34A),
-                            textColor: const Color(0xFF14532D),
-                            onTap: () => context.go('/reports'),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // 3. QUICK ACTION BUTTONS HUB (Floating cards inspired by Image 2)
-                      Text(
-                        'Quick Hub',
-                        style: AppTypography.headlineLg.copyWith(fontSize: 18, fontWeight: FontWeight.w800),
-                      ),
-                      const SizedBox(height: 12),
-
-                      QuickActionHub(
-                        onTakeAttendance: () {
-                          _showCoursePickerModal(
-                            context,
-                            'Select Course for Attendance',
-                            (c) => context.push('/courses/${c.id}/record'),
-                          );
-                        },
-                        onAddCourse: () => context.push('/courses/create'),
-                        onImportRoster: () {
-                          _showCoursePickerModal(
-                            context,
-                            'Select Course for Roster Import',
-                            (c) => context.push('/courses/${c.id}/import'),
-                          );
-                        },
-                        onViewAnalytics: () => context.go('/reports'),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // 4. TAB FILTER PILLS (Inspired by Image 1 "My Project (5)" / "Received (2)")
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              _TabFilterPill(
-                                label: 'My Courses (${widget.courses.length})',
-                                isSelected: _selectedTab == 0,
-                                onTap: () => setState(() => _selectedTab = 0),
-                              ),
-                              const SizedBox(width: 8),
-                              _TabFilterPill(
-                                label: 'Recent (${allRecentSessions.length})',
-                                isSelected: _selectedTab == 1,
-                                onTap: () => setState(() => _selectedTab = 1),
-                              ),
-                            ],
-                          ),
-                          TextButton.icon(
-                            onPressed: () => context.push('/courses/create'),
-                            icon: const Icon(Icons.add, size: 16),
-                            label: const Text('Add'),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 14),
-
-                      // TAB CONTENT
-                      if (_selectedTab == 0) ...[
-                        if (widget.courses.isEmpty)
-                          EmptyStateWidget.noCourses(
-                            onAddCourse: () => context.push('/courses/create'),
-                          )
-                        else
-                          ...courseDataList.map((data) {
-                            final course = data['course'] as Course;
-                            return CourseCard(
-                              course: course,
-                              studentCount: data['studentCount'] as int,
-                              classesHeldCount: data['classesHeld'] as int,
-                              averageAttendancePct: data['avgPct'] as double,
-                              onTap: () => context.push('/courses/${course.id}'),
-                            );
-                          }),
-                      ] else ...[
-                        if (allRecentSessions.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 24),
-                            child: Center(child: Text('No attendance sessions recorded yet.')),
-                          )
-                        else
-                          ...allRecentSessions.take(5).map((data) {
-                            final sess = data['session'] as AttendanceSession;
-                            final cCode = data['courseCode'] as String;
-                            final cId = data['courseId'] as String;
-                            final dateStr = DateFormat('EEE, MMM d, yyyy').format(sess.date);
-
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: AppColors.cardBorder),
-                                boxShadow: const [
-                                  BoxShadow(color: Color(0x06000000), blurRadius: 8, offset: Offset(0, 2)),
-                                ],
-                              ),
-                              child: ListTile(
-                                onTap: () => context.push('/courses/$cId/record?sessionId=${sess.id}'),
-                                leading: Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFEEF2FF),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    '#${sess.classNumber}',
-                                    style: AppTypography.titleMd.copyWith(
-                                      color: const Color(0xFF4F46E5),
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                                title: Text(
-                                  '$cCode — ${sess.topic}',
-                                  style: AppTypography.titleMd.copyWith(fontSize: 15, fontWeight: FontWeight.w700),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                subtitle: Text(dateStr, style: const TextStyle(fontSize: 12, color: AppColors.secondary)),
-                                trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.secondary),
-                              ),
-                            );
-                          }),
+                        ),
                       ],
+                    ),
 
-                      const SizedBox(height: 24),
+                    const SizedBox(height: 12),
+
+                    // Tab content
+                    if (_selectedTab == 0) ...[
+                      if (widget.courses.isEmpty)
+                        EmptyStateWidget.noCourses(
+                            onAddCourse: () =>
+                                context.push('/courses/create'))
+                      else
+                        ...courseDataList.map((data) {
+                          final course = data['course'] as Course;
+                          return CourseCard(
+                            course: course,
+                            studentCount: data['studentCount'] as int,
+                            classesHeldCount: data['classesHeld'] as int,
+                            averageAttendancePct: data['avgPct'] as double,
+                            onTap: () =>
+                                context.push('/courses/${course.id}'),
+                          );
+                        }),
+                    ] else ...[
+                      if (allRecentSessions.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 32),
+                          child: Center(
+                            child: Text(
+                              'No attendance sessions recorded yet.',
+                              style: TextStyle(color: AppColors.textMuted),
+                            ),
+                          ),
+                        )
+                      else
+                        ...allRecentSessions.take(5).map((data) {
+                          final sess =
+                              data['session'] as AttendanceSession;
+                          final cCode = data['courseCode'] as String;
+                          final cId = data['courseId'] as String;
+                          final dateStr2 =
+                              DateFormat('EEE, MMM d').format(sess.date);
+
+                          return _RecentSessionTile(
+                            session: sess,
+                            courseCode: cCode,
+                            courseId: cId,
+                            dateStr: dateStr2,
+                          );
+                        }),
                     ],
-                  ),
+
+                    const SizedBox(height: 32),
+                  ]),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
@@ -587,36 +697,179 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
   }
 }
 
-class _TabFilterPill extends StatelessWidget {
+// ── Small Widgets ─────────────────────────────────────────────────────────────
+
+class _AttendanceArc extends StatelessWidget {
+  final double percentage;
+  const _AttendanceArc({required this.percentage});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 72,
+      height: 72,
+      child: CustomPaint(
+        painter: _ArcPainter(percentage: percentage / 100),
+        child: Center(
+          child: Text(
+            percentage.toStringAsFixed(0),
+            style: AppTypography.caption.copyWith(
+                color: Colors.white.withValues(alpha: 0.7),
+                fontSize: 13,
+                fontWeight: FontWeight.w700),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ArcPainter extends CustomPainter {
+  final double percentage;
+  const _ArcPainter({required this.percentage});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    const strokeW = 6.0;
+    final radius = (size.width - strokeW) / 2;
+
+    final track = Paint()
+      ..color = Colors.white.withValues(alpha: 0.15)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeW
+      ..strokeCap = StrokeCap.round;
+
+    final arc = Paint()
+      ..color = Colors.white.withValues(alpha: 0.9)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeW
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawCircle(center, radius, track);
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi / 2,
+      2 * math.pi * percentage.clamp(0.0, 1.0),
+      false,
+      arc,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_ArcPainter old) => old.percentage != percentage;
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final Widget? trailing;
+
+  const _SectionHeader({required this.title, this.trailing});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(title, style: AppTypography.headlineMd.copyWith(fontSize: 16)),
+        if (trailing != null) trailing!,
+      ],
+    );
+  }
+}
+
+class _TabPill extends StatelessWidget {
   final String label;
+  final int count;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _TabFilterPill({
+  const _TabPill({
     required this.label,
+    required this.count,
     required this.isSelected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(20),
+          color: isSelected ? AppColors.navyDeep : AppColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(100),
         ),
         child: Text(
-          label,
+          '$label ($count)',
           style: AppTypography.labelMd.copyWith(
-            color: isSelected ? Colors.white : const Color(0xFF64748B),
-            fontSize: 13,
+            color: isSelected ? Colors.white : AppColors.textSecondary,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+            fontSize: 13,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _RecentSessionTile extends StatelessWidget {
+  final AttendanceSession session;
+  final String courseCode;
+  final String courseId;
+  final String dateStr;
+
+  const _RecentSessionTile({
+    required this.session,
+    required this.courseCode,
+    required this.courseId,
+    required this.dateStr,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: ListTile(
+        onTap: () =>
+            context.push('/courses/$courseId/record?sessionId=${session.id}'),
+        leading: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: AppColors.accentLight,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(
+            child: Text(
+              '#${session.classNumber}',
+              style: AppTypography.titleSm.copyWith(
+                color: AppColors.accent,
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ),
+        title: Text(
+          '$courseCode — ${session.topic}',
+          style: AppTypography.titleSm.copyWith(fontSize: 14),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          dateStr,
+          style: AppTypography.caption,
+        ),
+        trailing: const Icon(Icons.chevron_right_rounded,
+            size: 18, color: AppColors.textMuted),
       ),
     );
   }

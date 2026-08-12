@@ -16,8 +16,9 @@ class CourseSettingsSheet extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => CourseSettingsSheet(course: course, ref: ref),
     );
@@ -27,23 +28,49 @@ class CourseSettingsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 36, height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(100),
+                ),
+              ),
+            ),
+
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    course.courseCode,
-                    style: AppTypography.titleMd.copyWith(fontWeight: FontWeight.w700),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentLight,
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        child: Text(
+                          course.courseCode,
+                          style: AppTypography.labelMd.copyWith(
+                            color: AppColors.accent, fontWeight: FontWeight.w700, fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 4),
                   Text(
                     course.courseTitle,
-                    style: AppTypography.labelMd.copyWith(color: AppColors.secondary),
+                    style: AppTypography.headlineMd.copyWith(fontSize: 16),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -51,10 +78,12 @@ class CourseSettingsSheet extends StatelessWidget {
               ),
             ),
 
-            const Divider(height: 16),
+            const SizedBox(height: 8),
+            const Divider(height: 1),
+            const SizedBox(height: 4),
 
             ListTile(
-              leading: const Icon(Icons.edit_outlined, color: AppColors.primaryContainer),
+              leading: const Icon(Icons.edit_outlined, color: AppColors.accent),
               title: const Text('Edit Course Details'),
               onTap: () {
                 Navigator.pop(context);
@@ -66,7 +95,7 @@ class CourseSettingsSheet extends StatelessWidget {
             ),
 
             ListTile(
-              leading: const Icon(Icons.upload_file_outlined, color: AppColors.primaryContainer),
+              leading: const Icon(Icons.upload_file_outlined, color: AppColors.accent),
               title: const Text('Manage & Import Students'),
               onTap: () {
                 Navigator.pop(context);
@@ -77,7 +106,7 @@ class CourseSettingsSheet extends StatelessWidget {
             ListTile(
               leading: Icon(
                 course.status == CourseStatus.archived ? Icons.unarchive_outlined : Icons.archive_outlined,
-                color: AppColors.secondary,
+                color: AppColors.textSecondary,
               ),
               title: Text(course.status == CourseStatus.archived ? 'Unarchive Course' : 'Archive Course'),
               onTap: () async {
@@ -93,8 +122,8 @@ class CourseSettingsSheet extends StatelessWidget {
             ),
 
             ListTile(
-              leading: const Icon(Icons.delete_outline, color: AppColors.absentRed),
-              title: Text('Delete Course', style: AppTypography.bodyMd.copyWith(color: AppColors.absentRed)),
+              leading: const Icon(Icons.delete_outline, color: AppColors.error),
+              title: Text('Delete Course', style: AppTypography.bodyMd.copyWith(color: AppColors.error)),
               onTap: () {
                 Navigator.pop(context);
                 _confirmDelete(context, ref);
@@ -120,7 +149,7 @@ class CourseSettingsSheet extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.absentRed),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             onPressed: () async {
               Navigator.pop(ctx);
               final db = ref.read(databaseProvider);
@@ -129,7 +158,7 @@ class CourseSettingsSheet extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Course deleted successfully'),
-                    backgroundColor: AppColors.absentRed,
+                    backgroundColor: AppColors.error,
                   ),
                 );
               }

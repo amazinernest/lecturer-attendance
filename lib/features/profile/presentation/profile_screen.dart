@@ -33,27 +33,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         final bytes = file.bytes;
 
         if (bytes != null) {
-          final avatarUrl = await StorageService().uploadAvatar(bytes, file.name);
+          final avatarUrl =
+              await StorageService().uploadAvatar(bytes, file.name);
 
           if (avatarUrl != null) {
             final currentUser = ref.read(currentUserProvider);
             if (currentUser != null) {
               final updatedUser = currentUser.copyWith(photoUrl: avatarUrl);
-              await ref.read(currentUserProvider.notifier).updateUserProfile(updatedUser);
+              await ref
+                  .read(currentUserProvider.notifier)
+                  .updateUserProfile(updatedUser);
 
               // Update photo_url in Supabase profiles table
               try {
                 await Supabase.instance.client
                     .from('profiles')
-                    .update({'photo_url': avatarUrl})
-                    .eq('id', currentUser.id);
+                    .update({'photo_url': avatarUrl}).eq('id', currentUser.id);
               } catch (_) {}
             }
 
             messenger.showSnackBar(
-              const SnackBar(
-                content: Text('Profile picture updated successfully!'),
-                backgroundColor: AppColors.presentGreen,
+              SnackBar(
+                content: const Text('Profile picture updated successfully!'),
+                backgroundColor: AppColors.success,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
             );
           }
@@ -63,7 +68,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text('Avatar upload failed: $e'),
-          backgroundColor: AppColors.absentRed,
+          backgroundColor: AppColors.error,
         ),
       );
     } finally {
@@ -76,200 +81,343 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final user = ref.watch(currentUserProvider);
     final coursesAsync = ref.watch(coursesStreamProvider);
     final syncState = ref.watch(syncServiceProvider).state;
+    final avatarLetter =
+        (user?.name.isNotEmpty == true) ? user!.name[0].toUpperCase() : 'D';
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text('Profile & Settings', style: AppTypography.headlineLg.copyWith(fontSize: 20)),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Lecturer Profile Card with Interactive Avatar Upload
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Stack(
+      body: CustomScrollView(
+        slivers: [
+          // ── Premium Profile Header ─────────────────────────────────
+          SliverToBoxAdapter(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF0A1628), Color(0xFF1A3A6B)],
+                ),
+                borderRadius:
+                    BorderRadius.vertical(bottom: Radius.circular(28)),
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+                  child: Column(
                     children: [
-                      CircleAvatar(
-                        radius: 34,
-                        backgroundColor: AppColors.primaryContainer,
-                        backgroundImage: user?.photoUrl != null ? NetworkImage(user!.photoUrl!) : null,
-                        child: user?.photoUrl == null
-                            ? Text(
-                                (user?.name.isNotEmpty == true) ? user!.name[0].toUpperCase() : 'D',
-                                style: AppTypography.displayLg.copyWith(color: AppColors.onPrimary, fontSize: 24),
-                              )
-                            : null,
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: InkWell(
-                          onTap: _isUploadingAvatar ? null : _pickAndUploadAvatar,
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryContainer,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                            ),
-                            child: _isUploadingAvatar
-                                ? const SizedBox(
-                                    width: 12,
-                                    height: 12,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                  )
-                                : const Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                      // Title row
+                      Row(
+                        children: [
+                          Text(
+                            'Profile',
+                            style: AppTypography.displayLg.copyWith(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800),
                           ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.settings_outlined,
+                                color: Colors.white, size: 18),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Avatar + Name
+                      Row(
+                        children: [
+                          // Avatar with camera overlay
+                          GestureDetector(
+                            onTap: _isUploadingAvatar
+                                ? null
+                                : _pickAndUploadAvatar,
+                            child: Stack(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(3),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.4),
+                                        width: 2),
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 38,
+                                    backgroundColor: AppColors.accent,
+                                    backgroundImage: user?.photoUrl != null
+                                        ? NetworkImage(user!.photoUrl!)
+                                        : null,
+                                    child: user?.photoUrl == null
+                                        ? Text(
+                                            avatarLetter,
+                                            style: AppTypography.displayLg
+                                                .copyWith(
+                                              color: Colors.white,
+                                              fontSize: 26,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 2,
+                                  right: 2,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(7),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.accent,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                          color: Colors.white, width: 2),
+                                    ),
+                                    child: _isUploadingAvatar
+                                        ? const SizedBox(
+                                            width: 12,
+                                            height: 12,
+                                            child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Colors.white))
+                                        : const Icon(Icons.camera_alt,
+                                            size: 13, color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(width: 16),
+
+                          // Name, email, role
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user?.name ?? 'Dr. Ernest',
+                                  style: AppTypography.headlineLg.copyWith(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  user?.email ??
+                                      'ernest.lecturer@university.edu.ng',
+                                  style: AppTypography.bodyMd.copyWith(
+                                    color: Colors.white.withValues(alpha: 0.6),
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.success.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(100),
+                                    border: Border.all(
+                                        color: AppColors.success
+                                            .withValues(alpha: 0.4)),
+                                  ),
+                                  child: Text(
+                                    '✓ Verified Lecturer',
+                                    style: AppTypography.caption.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Quick stats row
+                      coursesAsync.when(
+                        data: (courses) => Row(
+                          children: [
+                            Expanded(
+                              child: _HeaderStat(
+                                value: '${courses.length}',
+                                label: 'Courses',
+                              ),
+                            ),
+                            Container(
+                              width: 1,
+                              height: 32,
+                              color: Colors.white.withValues(alpha: 0.2),
+                            ),
+                            Expanded(
+                              child: _HeaderStat(
+                                value: syncState.label,
+                                label: 'Sync',
+                              ),
+                            ),
+                          ],
                         ),
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, __) => const SizedBox.shrink(),
                       ),
                     ],
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          user?.name ?? 'Dr. Ernest',
-                          style: AppTypography.headlineLg.copyWith(fontSize: 18),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          user?.email ?? 'ernest.lecturer@university.edu.ng',
-                          style: AppTypography.labelMd.copyWith(color: AppColors.secondary),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.presentBg,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            'Lecturer Profile',
-                            style: AppTypography.labelMd.copyWith(
-                              color: AppColors.presentGreen,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
 
-          const SizedBox(height: 16),
+          // ── Settings List ──────────────────────────────────────────
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                const SizedBox(height: 8),
 
-          // Overview Stats Row
-          coursesAsync.when(
-            data: (courses) {
-              return Card(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _ProfileStatItem(title: 'Active Courses', value: '${courses.length}'),
-                      const SizedBox(height: 30, child: VerticalDivider()),
-                      _ProfileStatItem(title: 'Sync Status', value: syncState.label),
-                    ],
+                _SectionLabel(label: 'Account'),
+                const SizedBox(height: 8),
+
+                _SettingsCard(items: [
+                  _SettingsTile(
+                    icon: Icons.person_outline_rounded,
+                    color: AppColors.accent,
+                    bg: AppColors.accentLight,
+                    title: 'Display Name',
+                    subtitle: user?.name ?? '—',
                   ),
-                ),
-              );
-            },
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
-          ),
+                  _SettingsTile(
+                    icon: Icons.email_outlined,
+                    color: AppColors.navyMid,
+                    bg: const Color(0xFFF0F4FF),
+                    title: 'Email Address',
+                    subtitle: user?.email ?? '—',
+                  ),
+                ]),
 
-          const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
-          Text(
-            'Settings',
-            style: AppTypography.titleMd.copyWith(fontSize: 16, fontWeight: FontWeight.w700),
-          ),
+                _SectionLabel(label: 'System'),
+                const SizedBox(height: 8),
 
-          const SizedBox(height: 8),
+                _SettingsCard(items: [
+                  _SettingsTile(
+                    icon: Icons.cloud_upload_outlined,
+                    color: AppColors.success,
+                    bg: AppColors.successBg,
+                    title: 'Cloud Storage Bucket',
+                    subtitle: 'lecturers-attendance-files',
+                    trailing: const Icon(Icons.check_circle_rounded,
+                        color: AppColors.success, size: 18),
+                  ),
+                  _SettingsTile(
+                    icon: Icons.sync_rounded,
+                    color: AppColors.warning,
+                    bg: AppColors.warningBg,
+                    title: 'Database Sync',
+                    subtitle: 'PostgreSQL & Drift Offline SQLite',
+                    trailing: const Icon(Icons.chevron_right_rounded,
+                        color: AppColors.textMuted, size: 18),
+                    onTap: () async {
+                      if (user != null) {
+                        await ref
+                            .read(syncServiceProvider)
+                            .syncNow(lecturerId: user.id);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Database sync completed!'),
+                              backgroundColor: AppColors.success,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ]),
 
-          Card(
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.cloud_upload_outlined, color: AppColors.primaryContainer),
-                  title: const Text('Cloud Storage Bucket'),
-                  subtitle: const Text('lecturers-attendance-files'),
-                  trailing: const Icon(Icons.check_circle, color: AppColors.presentGreen, size: 20),
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.storage_outlined, color: AppColors.primaryContainer),
-                  title: const Text('Database Sync'),
-                  subtitle: const Text('PostgreSQL & Drift Offline SQLite'),
-                  trailing: const Icon(Icons.sync, color: AppColors.primaryContainer, size: 20),
-                  onTap: () async {
-                    if (user != null) {
-                      await ref.read(syncServiceProvider).syncNow(lecturerId: user.id);
-                      if (context.mounted) {
+                const SizedBox(height: 20),
+
+                _SectionLabel(label: 'Help & About'),
+                const SizedBox(height: 8),
+
+                _SettingsCard(items: [
+                  _SettingsTile(
+                    icon: Icons.help_outline_rounded,
+                    color: AppColors.navyMid,
+                    bg: const Color(0xFFF0F4FF),
+                    title: 'Help & Support',
+                    subtitle: 'amazinernest@gmail.com',
+                    trailing: const Icon(Icons.mail_outline_rounded,
+                        size: 18, color: AppColors.textMuted),
+                    onTap: () async {
+                      final Uri emailUri = Uri(
+                        scheme: 'mailto',
+                        path: 'amazinernest@gmail.com',
+                        queryParameters: {
+                          'subject': 'AttendTrack Support & Inquiry'
+                        },
+                      );
+                      if (await canLaunchUrl(emailUri)) {
+                        await launchUrl(emailUri);
+                      } else if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Database sync completed!'),
-                            backgroundColor: AppColors.presentGreen,
+                            content: Text(
+                                'Contact: amazinernest@gmail.com'),
                           ),
                         );
                       }
-                    }
-                  },
+                    },
+                  ),
+                  _SettingsTile(
+                    icon: Icons.info_outline_rounded,
+                    color: AppColors.textMuted,
+                    bg: AppColors.surfaceVariant,
+                    title: 'App Version',
+                    subtitle: 'AttendTrack v1.0.0',
+                  ),
+                ]),
+
+                const SizedBox(height: 28),
+
+                // Sign Out
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    side: const BorderSide(color: AppColors.error, width: 1.5),
+                    minimumSize: const Size(double.infinity, 52),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                  ),
+                  onPressed: () => _confirmSignOut(context, ref),
+                  icon: const Icon(Icons.logout_rounded, color: AppColors.error),
+                  label: const Text('Sign Out'),
                 ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.help_outline, color: AppColors.primaryContainer),
-                  title: const Text('Help & Support'),
-                  subtitle: const Text('Contact developer (amazinernest@gmail.com)'),
-                  trailing: const Icon(Icons.mail_outline, size: 20),
-                  onTap: () async {
-                    final Uri emailUri = Uri(
-                      scheme: 'mailto',
-                      path: 'amazinernest@gmail.com',
-                      queryParameters: {'subject': 'Lecturer Attendance Support & Inquiry'},
-                    );
-                    if (await canLaunchUrl(emailUri)) {
-                      await launchUrl(emailUri);
-                    } else {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Could not open email client. Contact: amazinernest@gmail.com'),
-                          ),
-                        );
-                      }
-                    }
-                  },
-                ),
-              ],
+
+                const SizedBox(height: 32),
+              ]),
             ),
           ),
-
-          const SizedBox(height: 24),
-
-          // Sign Out Button with Confirmation Dialog
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.absentRed,
-              side: const BorderSide(color: AppColors.absentRed, width: 1.5),
-            ),
-            onPressed: () => _confirmSignOut(context, ref),
-            icon: const Icon(Icons.logout, color: AppColors.absentRed),
-            label: const Text('Sign Out'),
-          ),
-
-          const SizedBox(height: 24),
         ],
       ),
     );
@@ -279,15 +427,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Sign Out?'),
-        content: const Text('Are you sure you want to sign out of Lecturer Attendance? Your local data will remain saved on this device.'),
+        content: const Text(
+            'Are you sure you want to sign out? Your local data will remain saved on this device.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.absentRed),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             onPressed: () async {
               Navigator.pop(ctx);
               await ref.read(currentUserProvider.notifier).signOut();
@@ -303,20 +453,116 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 }
 
-class _ProfileStatItem extends StatelessWidget {
-  final String title;
-  final String value;
+// ── Helper Widgets ─────────────────────────────────────────────────────────────
 
-  const _ProfileStatItem({required this.title, required this.value});
+class _HeaderStat extends StatelessWidget {
+  final String value;
+  final String label;
+
+  const _HeaderStat({required this.value, required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(value, style: AppTypography.statLg.copyWith(fontSize: 18, color: AppColors.primaryContainer)),
+        Text(
+          value,
+          style: AppTypography.statMd.copyWith(
+              color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
+        ),
         const SizedBox(height: 2),
-        Text(title, style: AppTypography.labelMd.copyWith(fontSize: 12)),
+        Text(
+          label,
+          style: AppTypography.caption.copyWith(
+              color: Colors.white.withValues(alpha: 0.6), fontSize: 11),
+        ),
       ],
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  const _SectionLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label.toUpperCase(),
+      style: AppTypography.caption.copyWith(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.2,
+        color: AppColors.textMuted,
+      ),
+    );
+  }
+}
+
+class _SettingsCard extends StatelessWidget {
+  final List<_SettingsTile> items;
+  const _SettingsCard({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: items
+            .map((tile) => Column(
+                  children: [
+                    tile,
+                    if (items.indexOf(tile) < items.length - 1)
+                      const Divider(height: 1),
+                  ],
+                ))
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _SettingsTile extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final Color bg;
+  final String title;
+  final String subtitle;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+
+  const _SettingsTile({
+    required this.icon,
+    required this.color,
+    required this.bg,
+    required this.title,
+    required this.subtitle,
+    this.trailing,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, size: 18, color: color),
+      ),
+      title: Text(title, style: AppTypography.titleSm.copyWith(fontSize: 14)),
+      subtitle: Text(subtitle, style: AppTypography.caption),
+      trailing: trailing,
     );
   }
 }

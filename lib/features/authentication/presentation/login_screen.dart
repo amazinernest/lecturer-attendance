@@ -33,9 +33,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       await ref.read(currentUserProvider.notifier).signInWithEmail(
-        _emailController.text,
-        _passwordController.text,
-      );
+            _emailController.text,
+            _passwordController.text,
+          );
 
       if (mounted) {
         context.go('/dashboard');
@@ -43,7 +43,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } catch (e) {
       if (mounted) {
         final rawMsg = e.toString();
-        final isEmailNotConfirmed = rawMsg.contains('email_not_confirmed') || rawMsg.contains('Email not confirmed');
+        final isEmailNotConfirmed = rawMsg.contains('email_not_confirmed') ||
+            rawMsg.contains('Email not confirmed');
         final errorMsg = isEmailNotConfirmed
             ? 'Email not confirmed yet. Please check your inbox or tap below to resend.'
             : rawMsg.replaceAll('Exception: ', '');
@@ -51,7 +52,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMsg),
-            backgroundColor: AppColors.absentRed,
+            backgroundColor: AppColors.error,
             duration: const Duration(seconds: 7),
             action: isEmailNotConfirmed
                 ? SnackBarAction(
@@ -59,12 +60,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     textColor: Colors.white,
                     onPressed: () async {
                       try {
-                        await ref.read(authServiceProvider).resendConfirmationEmail(_emailController.text);
+                        await ref
+                            .read(authServiceProvider)
+                            .resendConfirmationEmail(_emailController.text);
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Confirmation link resent! Please check your email.'),
-                              backgroundColor: AppColors.presentGreen,
+                              content: Text(
+                                  'Confirmation link resent! Please check your email.'),
+                              backgroundColor: AppColors.success,
                             ),
                           );
                         }
@@ -72,8 +76,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Failed to resend: ${err.toString().replaceAll('Exception: ', '')}'),
-                              backgroundColor: AppColors.absentRed,
+                              content: Text(
+                                  'Failed to resend: ${err.toString().replaceAll('Exception: ', '')}'),
+                              backgroundColor: AppColors.error,
                             ),
                           );
                         }
@@ -93,10 +98,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Sign In'),
-        elevation: 0,
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -105,28 +106,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  'Welcome Back',
-                  style: AppTypography.headlineLg.copyWith(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primaryContainer,
-                  ),
+                const SizedBox(height: 16),
+
+                // Back button
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: _BackButton(onTap: () => context.go('/welcome')),
                 ),
-                const SizedBox(height: 6),
+
+                const SizedBox(height: 32),
+
+                // Header
+                Text(
+                  'Welcome back',
+                  style: AppTypography.displayLg.copyWith(fontSize: 28),
+                ),
+                const SizedBox(height: 8),
                 Text(
                   'Sign in to access your courses and attendance records.',
-                  style: AppTypography.bodyMd.copyWith(
-                    color: AppColors.secondary,
-                    fontSize: 14,
-                  ),
+                  style: AppTypography.bodyMd,
                 ),
 
-                const SizedBox(height: 28),
+                const SizedBox(height: 36),
 
-                // Email Input
-                Text('Email Address', style: AppTypography.labelMd.copyWith(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 6),
+                // Email
+                _FieldLabel(label: 'Email Address'),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -134,66 +139,67 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     hintText: 'lecturer@university.edu',
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your email address';
-                    }
-                    return null;
-                  },
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Please enter your email address'
+                      : null,
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
 
-                // Password Input
+                // Password
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Password', style: AppTypography.labelMd.copyWith(fontWeight: FontWeight.w600)),
+                    _FieldLabel(label: 'Password'),
                     GestureDetector(
                       onTap: () => context.push('/forgot-password'),
                       child: Text(
-                        'Forgot Password?',
+                        'Forgot password?',
                         style: AppTypography.labelMd.copyWith(
-                          color: AppColors.primaryContainer,
+                          color: AppColors.accent,
+                          fontWeight: FontWeight.w700,
                           fontSize: 13,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     hintText: '••••••••',
-                    prefixIcon: const Icon(Icons.lock_outline),
+                    prefixIcon: const Icon(Icons.lock_outline_rounded),
                     suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 20,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    return null;
-                  },
+                  validator: (v) => (v == null || v.isEmpty)
+                      ? 'Please enter your password'
+                      : null,
                 ),
 
-                const SizedBox(height: 28),
+                const SizedBox(height: 32),
 
-                // Sign In Button
+                // Sign In
                 ElevatedButton(
                   onPressed: _isLoading ? null : _handleEmailLogin,
                   child: _isLoading
                       ? const SizedBox(
-                          width: 24,
-                          height: 24,
+                          width: 22,
+                          height: 22,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
-                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.onPrimary),
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
                       : const Text('Sign In'),
@@ -201,17 +207,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 const SizedBox(height: 28),
 
-                // Don't have an account? Sign Up
+                // Sign Up link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Don't have an account? ", style: AppTypography.labelMd.copyWith(color: AppColors.secondary)),
+                    Text(
+                      "Don't have an account? ",
+                      style: AppTypography.bodyMd,
+                    ),
                     GestureDetector(
                       onTap: () => context.push('/register'),
                       child: Text(
                         'Sign Up',
-                        style: AppTypography.labelMd.copyWith(
-                          color: AppColors.primaryContainer,
+                        style: AppTypography.bodyMd.copyWith(
+                          color: AppColors.accent,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -222,6 +231,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String label;
+  const _FieldLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: AppTypography.titleSm.copyWith(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+      ),
+    );
+  }
+}
+
+class _BackButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _BackButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: const Icon(Icons.arrow_back_rounded,
+            size: 20, color: AppColors.textPrimary),
       ),
     );
   }

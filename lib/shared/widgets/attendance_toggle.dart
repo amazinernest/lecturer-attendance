@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/theme/app_theme.dart';
 import '../models/attendance_record.dart';
 
+/// Large, tactile attendance toggle optimised for classroom use.
+/// Features large touch targets and animated state transitions.
 class AttendanceToggle extends StatelessWidget {
   final AttendanceStatus status;
   final ValueChanged<AttendanceStatus> onChanged;
@@ -17,95 +20,104 @@ class AttendanceToggle extends StatelessWidget {
     final isPresent = status == AttendanceStatus.present;
 
     return Container(
-      height: 44,
+      height: 40,
       decoration: BoxDecoration(
         color: AppColors.surfaceVariant,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: AppColors.border),
       ),
       padding: const EdgeInsets.all(3),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Present Button
-          GestureDetector(
-            onTap: () => onChanged(AttendanceStatus.present),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: isPresent ? AppColors.presentGreen : Colors.transparent,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: isPresent
-                    ? [
-                        BoxShadow(
-                          color: AppColors.presentGreen.withValues(alpha: 0.3),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        )
-                      ]
-                    : [],
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.check_circle_rounded,
-                    size: 16,
-                    color: isPresent ? AppColors.onPrimary : AppColors.secondary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Present',
-                    style: AppTypography.labelMd.copyWith(
-                      color: isPresent ? AppColors.onPrimary : AppColors.secondary,
-                      fontWeight: isPresent ? FontWeight.w700 : FontWeight.w500,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          // Present
+          _ToggleButton(
+            label: 'Present',
+            icon: Icons.check_circle_rounded,
+            isActive: isPresent,
+            activeColor: AppColors.success,
+            activeBg: AppColors.success,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              onChanged(AttendanceStatus.present);
+            },
           ),
 
-          // Absent Button
-          GestureDetector(
-            onTap: () => onChanged(AttendanceStatus.absent),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: !isPresent ? AppColors.absentRed : Colors.transparent,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: !isPresent
-                    ? [
-                        BoxShadow(
-                          color: AppColors.absentRed.withValues(alpha: 0.3),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        )
-                      ]
-                    : [],
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.cancel_rounded,
-                    size: 16,
-                    color: !isPresent ? AppColors.onPrimary : AppColors.secondary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Absent',
-                    style: AppTypography.labelMd.copyWith(
-                      color: !isPresent ? AppColors.onPrimary : AppColors.secondary,
-                      fontWeight: !isPresent ? FontWeight.w700 : FontWeight.w500,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          // Absent
+          _ToggleButton(
+            label: 'Absent',
+            icon: Icons.cancel_rounded,
+            isActive: !isPresent,
+            activeColor: AppColors.error,
+            activeBg: AppColors.error,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              onChanged(AttendanceStatus.absent);
+            },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ToggleButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isActive;
+  final Color activeColor;
+  final Color activeBg;
+  final VoidCallback onTap;
+
+  const _ToggleButton({
+    required this.label,
+    required this.icon,
+    required this.isActive,
+    required this.activeColor,
+    required this.activeBg,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: isActive ? activeBg : Colors.transparent,
+          borderRadius: BorderRadius.circular(100),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: activeBg.withValues(alpha: 0.35),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isActive ? Colors.white : AppColors.textMuted,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: AppTypography.caption.copyWith(
+                color: isActive ? Colors.white : AppColors.textMuted,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

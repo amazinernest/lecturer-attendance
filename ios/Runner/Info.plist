@@ -65,6 +65,7 @@
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
