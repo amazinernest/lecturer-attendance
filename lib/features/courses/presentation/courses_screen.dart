@@ -193,6 +193,7 @@ class _CourseListItem extends ConsumerWidget {
           averageAttendancePct: avgPct,
           onTap: () => context.push('/courses/${course.id}'),
           onMoreTap: () => CourseSettingsSheet.show(context, ref, course),
+          onQuickRecord: () => context.push('/courses/${course.id}/record'),
         );
       },
     );

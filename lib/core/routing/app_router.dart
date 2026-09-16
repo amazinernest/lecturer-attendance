@@ -160,44 +160,75 @@ class ScaffoldWithBottomNavBar extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           border: Border(
-            top: BorderSide(color: AppColors.border, width: 1),
+            top: BorderSide(color: AppColors.border.withValues(alpha: 0.8), width: 1),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 20,
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 16,
               offset: const Offset(0, -4),
             ),
           ],
         ),
-        child: NavigationBar(
-          selectedIndex: selectedIndex,
-          onDestinationSelected: (index) =>
-              _onDestinationSelected(index, context),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home_rounded),
-              label: 'Home',
+        child: NavigationBarTheme(
+          data: NavigationBarThemeData(
+            indicatorColor: AppColors.accentLight,
+            indicatorShape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            NavigationDestination(
-              icon: Icon(Icons.library_books_outlined),
-              selectedIcon: Icon(Icons.library_books_rounded),
-              label: 'Courses',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.bar_chart_outlined),
-              selectedIcon: Icon(Icons.bar_chart_rounded),
-              label: 'Reports',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline_rounded),
-              selectedIcon: Icon(Icons.person_rounded),
-              label: 'Profile',
-            ),
-          ],
+            labelTextStyle: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return const TextStyle(
+                  fontFamily: AppTypography.fontFamily,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.accent,
+                );
+              }
+              return const TextStyle(
+                fontFamily: AppTypography.fontFamily,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textMuted,
+              );
+            }),
+            iconTheme: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return const IconThemeData(color: AppColors.accent, size: 22);
+              }
+              return const IconThemeData(color: AppColors.textSecondary, size: 22);
+            }),
+          ),
+          child: NavigationBar(
+            selectedIndex: selectedIndex,
+            onDestinationSelected: (index) =>
+                _onDestinationSelected(index, context),
+            backgroundColor: AppColors.surface,
+            elevation: 0,
+            height: 66,
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.grid_view_rounded),
+                selectedIcon: Icon(Icons.grid_view_rounded),
+                label: 'Dashboard',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.school_outlined),
+                selectedIcon: Icon(Icons.school_rounded),
+                label: 'Courses',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.bar_chart_outlined),
+                selectedIcon: Icon(Icons.bar_chart_rounded),
+                label: 'Reports',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.account_circle_outlined),
+                selectedIcon: Icon(Icons.account_circle_rounded),
+                label: 'Profile',
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -9,6 +9,7 @@ class CourseCard extends StatelessWidget {
   final double averageAttendancePct;
   final VoidCallback onTap;
   final VoidCallback? onMoreTap;
+  final VoidCallback? onQuickRecord;
 
   const CourseCard({
     super.key,
@@ -18,6 +19,7 @@ class CourseCard extends StatelessWidget {
     required this.averageAttendancePct,
     required this.onTap,
     this.onMoreTap,
+    this.onQuickRecord,
   });
 
   Color get _attendanceColor {
@@ -39,201 +41,239 @@ class CourseCard extends StatelessWidget {
         : 0.0;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.9), width: 1.2),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 12,
-            offset: Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.035),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            splashColor: AppColors.accentLight,
-            highlightColor: AppColors.accentLight.withValues(alpha: 0.5),
-            child: IntrinsicHeight(
-              child: Row(
-                children: [
-                  // Left accent bar
-                  Container(
-                    width: 4,
-                    decoration: BoxDecoration(
-                      color: _attendanceColor,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        bottomLeft: Radius.circular(16),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          splashColor: AppColors.accentLight,
+          highlightColor: AppColors.accentLight.withValues(alpha: 0.4),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Row: Code Pill, Level, Semester & Attendance %
+                Row(
+                  children: [
+                    // Course Code badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                      decoration: BoxDecoration(
+                        color: AppColors.accentLight,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: AppColors.accent.withValues(alpha: 0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        course.courseCode,
+                        style: const TextStyle(
+                          fontFamily: AppTypography.fontFamily,
+                          color: AppColors.accent,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                          letterSpacing: 0.3,
+                        ),
                       ),
                     ),
-                  ),
 
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(width: 8),
+
+                    // Level tag
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceVariant,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        course.level,
+                        style: TextStyle(
+                          fontFamily: AppTypography.fontFamily,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+
+                    const Spacer(),
+
+                    // Attendance rate badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
+                      decoration: BoxDecoration(
+                        color: _attendanceBg,
+                        borderRadius: BorderRadius.circular(100),
+                        border: Border.all(
+                          color: _attendanceColor.withValues(alpha: 0.25),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Top row: code pill + attendance badge + menu
-                          Row(
-                            children: [
-                              // Course code pill
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.accentLight,
-                                  borderRadius: BorderRadius.circular(100),
-                                ),
-                                child: Text(
-                                  course.courseCode,
-                                  style: AppTypography.labelMd.copyWith(
-                                    color: AppColors.accent,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(width: 8),
-
-                              // Level pill
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfaceVariant,
-                                  borderRadius: BorderRadius.circular(100),
-                                ),
-                                child: Text(
-                                  course.level,
-                                  style: AppTypography.caption.copyWith(
-                                    color: AppColors.textSecondary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-
-                              const Spacer(),
-
-                              // Attendance % badge
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 9, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: _attendanceBg,
-                                  borderRadius: BorderRadius.circular(100),
-                                ),
-                                child: Text(
-                                  '${averageAttendancePct.toStringAsFixed(0)}%',
-                                  style: AppTypography.caption.copyWith(
-                                    color: _attendanceColor,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-
-                              if (onMoreTap != null) ...[
-                                const SizedBox(width: 2),
-                                SizedBox(
-                                  width: 32,
-                                  height: 32,
-                                  child: IconButton(
-                                    padding: EdgeInsets.zero,
-                                    icon: const Icon(Icons.more_vert_rounded,
-                                        size: 18, color: AppColors.textMuted),
-                                    onPressed: onMoreTap,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          // Course title
-                          Text(
-                            course.courseTitle,
-                            style: AppTypography.headlineMd.copyWith(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: _attendanceColor,
+                              shape: BoxShape.circle,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
-
-                          const SizedBox(height: 4),
-
-                          // Department
+                          const SizedBox(width: 5),
                           Text(
-                            course.department,
-                            style: AppTypography.bodyMd.copyWith(fontSize: 12),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          // Meta row: students + classes
-                          Row(
-                            children: [
-                              _MetaChip(
-                                icon: Icons.people_alt_outlined,
-                                label: '$studentCount Students',
-                              ),
-                              const SizedBox(width: 12),
-                              _MetaChip(
-                                icon: Icons.event_note_outlined,
-                                label: '$classesHeldCount / ${course.expectedClasses}',
-                              ),
-                              const Spacer(),
-                              // Semester label
-                              Text(
-                                course.semester,
-                                style: AppTypography.caption,
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          // Classes progress bar
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(6),
-                                child: LinearProgressIndicator(
-                                  value: progressFraction,
-                                  minHeight: 5,
-                                  backgroundColor: AppColors.surfaceVariant,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      _attendanceColor),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${(progressFraction * 100).toStringAsFixed(0)}% classes completed',
-                                style: AppTypography.caption.copyWith(
-                                  color: AppColors.textMuted,
-                                ),
-                              ),
-                            ],
+                            '${averageAttendancePct.toStringAsFixed(0)}% Avg',
+                            style: TextStyle(
+                              fontFamily: AppTypography.fontFamily,
+                              color: _attendanceColor,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 11.5,
+                            ),
                           ),
                         ],
                       ),
                     ),
+
+                    if (onMoreTap != null) ...[
+                      const SizedBox(width: 4),
+                      GestureDetector(
+                        onTap: onMoreTap,
+                        behavior: HitTestBehavior.opaque,
+                        child: const Padding(
+                          padding: EdgeInsets.all(4),
+                          child: Icon(
+                            Icons.more_vert_rounded,
+                            size: 20,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // Course Title
+                Text(
+                  course.courseTitle,
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    height: 1.3,
                   ),
-                ],
-              ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const SizedBox(height: 4),
+
+                // Department & Semester Info
+                Text(
+                  '${course.department} • ${course.semester}',
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontSize: 12.5,
+                    color: AppColors.textSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const SizedBox(height: 14),
+
+                // Meta Row: Students + Classes progress
+                Row(
+                  children: [
+                    _InfoPill(
+                      icon: Icons.people_outline_rounded,
+                      label: '$studentCount Students',
+                      color: AppColors.navyLight,
+                    ),
+                    const SizedBox(width: 12),
+                    _InfoPill(
+                      icon: Icons.calendar_today_outlined,
+                      label: '$classesHeldCount of ${course.expectedClasses} Sessions',
+                      color: AppColors.textSecondary,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                // Progress Bar
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(100),
+                      child: LinearProgressIndicator(
+                        value: progressFraction,
+                        minHeight: 6,
+                        backgroundColor: AppColors.surfaceVariant,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          progressFraction >= 0.8
+                              ? AppColors.success
+                              : AppColors.accent,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${(progressFraction * 100).toStringAsFixed(0)}% syllabus completed',
+                          style: const TextStyle(
+                            fontFamily: AppTypography.fontFamily,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                        if (onQuickRecord != null)
+                          GestureDetector(
+                            onTap: onQuickRecord,
+                            child: Row(
+                              children: [
+                                Icon(Icons.qr_code_rounded,
+                                    size: 13, color: AppColors.accent),
+                                const SizedBox(width: 3),
+                                Text(
+                                  'Record',
+                                  style: TextStyle(
+                                    fontFamily: AppTypography.fontFamily,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.accent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
@@ -242,23 +282,30 @@ class CourseCard extends StatelessWidget {
   }
 }
 
-class _MetaChip extends StatelessWidget {
+class _InfoPill extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Color color;
 
-  const _MetaChip({required this.icon, required this.label});
+  const _InfoPill({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 13, color: AppColors.textMuted),
+        Icon(icon, size: 14, color: color.withValues(alpha: 0.8)),
         const SizedBox(width: 4),
         Text(
           label,
-          style: AppTypography.caption.copyWith(
-            color: AppColors.textSecondary,
+          style: TextStyle(
+            fontFamily: AppTypography.fontFamily,
+            color: color,
+            fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
         ),

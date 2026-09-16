@@ -44,6 +44,53 @@ class AppColors {
   static const Color error   = Color(0xFFDC2626);
   static const Color errorBg = Color(0xFFFEF2F2);
 
+  // ── Gradients ────────────────────────────────
+  static const LinearGradient heroGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF070E1A),
+      Color(0xFF0F2243),
+      Color(0xFF1E3A8A),
+    ],
+  );
+
+  static const LinearGradient accentGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF3B82F6),
+      Color(0xFF1D4ED8),
+    ],
+  );
+
+  static const LinearGradient emeraldGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF10B981),
+      Color(0xFF059669),
+    ],
+  );
+
+  static const LinearGradient amberGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFFF59E0B),
+      Color(0xFFD97706),
+    ],
+  );
+
+  static const LinearGradient purpleGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF8B5CF6),
+      Color(0xFF6D28D9),
+    ],
+  );
+
   // ── Backward-compatibility aliases ──────────
   // (Keep old names so existing files using them still compile)
   static const Color primary              = navyDeep;

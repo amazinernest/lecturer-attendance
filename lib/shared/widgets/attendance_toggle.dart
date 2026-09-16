@@ -3,8 +3,7 @@ import 'package:flutter/services.dart';
 import '../../core/theme/app_theme.dart';
 import '../models/attendance_record.dart';
 
-/// Large, tactile attendance toggle optimised for classroom use.
-/// Features large touch targets and animated state transitions.
+/// Ultra-clean, tactile attendance toggle button optimized for rapid classroom marking.
 class AttendanceToggle extends StatelessWidget {
   final AttendanceStatus status;
   final ValueChanged<AttendanceStatus> onChanged;
@@ -19,104 +18,51 @@ class AttendanceToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     final isPresent = status == AttendanceStatus.present;
 
-    return Container(
-      height: 40,
-      decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onChanged(isPresent ? AttendanceStatus.absent : AttendanceStatus.present);
+        },
         borderRadius: BorderRadius.circular(100),
-        border: Border.all(color: AppColors.border),
-      ),
-      padding: const EdgeInsets.all(3),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Present
-          _ToggleButton(
-            label: 'Present',
-            icon: Icons.check_circle_rounded,
-            isActive: isPresent,
-            activeColor: AppColors.success,
-            activeBg: AppColors.success,
-            onTap: () {
-              HapticFeedback.lightImpact();
-              onChanged(AttendanceStatus.present);
-            },
-          ),
-
-          // Absent
-          _ToggleButton(
-            label: 'Absent',
-            icon: Icons.cancel_rounded,
-            isActive: !isPresent,
-            activeColor: AppColors.error,
-            activeBg: AppColors.error,
-            onTap: () {
-              HapticFeedback.lightImpact();
-              onChanged(AttendanceStatus.absent);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ToggleButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool isActive;
-  final Color activeColor;
-  final Color activeBg;
-  final VoidCallback onTap;
-
-  const _ToggleButton({
-    required this.label,
-    required this.icon,
-    required this.isActive,
-    required this.activeColor,
-    required this.activeBg,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: isActive ? activeBg : Colors.transparent,
-          borderRadius: BorderRadius.circular(100),
-          boxShadow: isActive
-              ? [
-                  BoxShadow(
-                    color: activeBg.withValues(alpha: 0.35),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : [],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 14,
-              color: isActive ? Colors.white : AppColors.textMuted,
-            ),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: AppTypography.caption.copyWith(
-                color: isActive ? Colors.white : AppColors.textMuted,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                fontSize: 12,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: isPresent ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+            borderRadius: BorderRadius.circular(100),
+            boxShadow: [
+              BoxShadow(
+                color: (isPresent ? const Color(0xFF10B981) : const Color(0xFFEF4444))
+                    .withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
-            ),
-          ],
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isPresent ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                size: 16,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                isPresent ? 'Present' : 'Absent',
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamily,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
