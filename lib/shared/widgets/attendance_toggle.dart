@@ -27,16 +27,17 @@ class AttendanceToggle extends StatelessWidget {
         },
         borderRadius: BorderRadius.circular(100),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
+          duration: const Duration(milliseconds: 200),
           curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          constraints: const BoxConstraints(minWidth: 94),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7.5),
           decoration: BoxDecoration(
             color: isPresent ? const Color(0xFF10B981) : const Color(0xFFEF4444),
             borderRadius: BorderRadius.circular(100),
             boxShadow: [
               BoxShadow(
                 color: (isPresent ? const Color(0xFF10B981) : const Color(0xFFEF4444))
-                    .withValues(alpha: 0.3),
+                    .withValues(alpha: 0.28),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -44,13 +45,14 @@ class AttendanceToggle extends StatelessWidget {
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 isPresent ? Icons.check_circle_rounded : Icons.cancel_rounded,
-                size: 16,
+                size: 15,
                 color: Colors.white,
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 5),
               Text(
                 isPresent ? 'Present' : 'Absent',
                 style: const TextStyle(

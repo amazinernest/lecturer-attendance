@@ -619,44 +619,50 @@ class _RecordAttendanceScreenState
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                // Filter Segment Pills
-                Row(
-                  children: [
-                    _FilterTabPill(
-                      label: 'All',
-                      count: totalCount,
-                      isSelected: _filterMode == 'All',
-                      color: AppColors.navyDeep,
-                      onTap: () => setState(() => _filterMode = 'All'),
-                    ),
-                    const SizedBox(width: 8),
-                    _FilterTabPill(
-                      label: 'Present',
-                      count: _presentCount,
-                      isSelected: _filterMode == 'Present',
-                      color: AppColors.success,
-                      onTap: () => setState(() => _filterMode = 'Present'),
-                    ),
-                    const SizedBox(width: 8),
-                    _FilterTabPill(
-                      label: 'Absent',
-                      count: _absentCount,
-                      isSelected: _filterMode == 'Absent',
-                      color: AppColors.error,
-                      onTap: () => setState(() => _filterMode = 'Absent'),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${_filteredStudents.length} showing',
-                      style: const TextStyle(
-                        fontFamily: AppTypography.fontFamily,
-                        fontSize: 12,
-                        color: AppColors.textMuted,
-                        fontWeight: FontWeight.w600,
+                const SizedBox(height: 12),
+                // Perfectly Balanced Segmented Filter Tabs (All, Present, Absent)
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border, width: 1),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _FilterTabItem(
+                          label: 'All',
+                          count: totalCount,
+                          isSelected: _filterMode == 'All',
+                          activeColor: AppColors.navyDeep,
+                          onTap: () => setState(() => _filterMode = 'All'),
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: _FilterTabItem(
+                          label: 'Present',
+                          count: _presentCount,
+                          isSelected: _filterMode == 'Present',
+                          activeColor: const Color(0xFF10B981),
+                          indicatorColor: const Color(0xFF10B981),
+                          onTap: () => setState(() => _filterMode = 'Present'),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: _FilterTabItem(
+                          label: 'Absent',
+                          count: _absentCount,
+                          isSelected: _filterMode == 'Absent',
+                          activeColor: const Color(0xFFEF4444),
+                          indicatorColor: const Color(0xFFEF4444),
+                          onTap: () => setState(() => _filterMode = 'Absent'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1102,18 +1108,20 @@ class _BatchActionButton extends StatelessWidget {
   }
 }
 
-class _FilterTabPill extends StatelessWidget {
+class _FilterTabItem extends StatelessWidget {
   final String label;
   final int count;
   final bool isSelected;
-  final Color color;
+  final Color activeColor;
+  final Color? indicatorColor;
   final VoidCallback onTap;
 
-  const _FilterTabPill({
+  const _FilterTabItem({
     required this.label,
     required this.count,
     required this.isSelected,
-    required this.color,
+    required this.activeColor,
+    this.indicatorColor,
     required this.onTap,
   });
 
@@ -1121,25 +1129,67 @@ class _FilterTabPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? color : Colors.transparent,
-          borderRadius: BorderRadius.circular(100),
-          border: Border.all(
-            color: isSelected ? color : AppColors.border,
-            width: 1,
-          ),
+          color: isSelected ? activeColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: activeColor.withValues(alpha: 0.25),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
-        child: Text(
-          '$label ($count)',
-          style: TextStyle(
-            fontFamily: AppTypography.fontFamily,
-            color: isSelected ? Colors.white : AppColors.textSecondary,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            fontSize: 12,
-          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (indicatorColor != null && !isSelected) ...[
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: indicatorColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 4.5),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamily,
+                color: isSelected ? Colors.white : AppColors.textSecondary,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(width: 5),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5.5, vertical: 1.5),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.22)
+                    : AppColors.border,
+                borderRadius: BorderRadius.circular(100),
+              ),
+              child: Text(
+                '$count',
+                style: TextStyle(
+                  fontFamily: AppTypography.fontFamily,
+                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
