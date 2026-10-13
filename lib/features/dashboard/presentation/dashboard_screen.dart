@@ -1671,7 +1671,8 @@ class _DashboardSkeleton extends StatelessWidget {
       children: [
         const DashboardHeaderSkeleton(),
         Expanded(
-          child: Padding(
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
@@ -1680,7 +1681,7 @@ class _DashboardSkeleton extends StatelessWidget {
                 const SizedBox(height: 12),
                 const StatCardRowSkeleton(),
                 const SizedBox(height: 24),
-                ...List.generate(3, (_) => const Padding(
+                ...List.generate(2, (_) => const Padding(
                   padding: EdgeInsets.only(bottom: 12),
                   child: CourseCardSkeleton(),
                 )),

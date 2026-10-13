@@ -269,6 +269,40 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
+  Future<void> batchInsertSessions(List<AttendanceSession> sessionsList) async {
+    await batch((batch) {
+      batch.insertAllOnConflictUpdate(
+        attendanceSessions,
+        sessionsList.map((s) => AttendanceSessionRow(
+          id: s.id,
+          courseId: s.courseId,
+          classNumber: s.classNumber,
+          date: s.date,
+          topic: s.topic,
+          createdAt: s.createdAt,
+          synced: s.synced,
+        )).toList(),
+      );
+    });
+  }
+
+  Future<void> batchInsertRecords(List<AttendanceRecord> recordsList) async {
+    await batch((batch) {
+      batch.insertAllOnConflictUpdate(
+        attendanceRecords,
+        recordsList.map((r) => AttendanceRecordRow(
+          id: r.id,
+          attendanceSessionId: r.attendanceSessionId,
+          studentId: r.studentId,
+          status: r.status.toValue(),
+          createdAt: r.createdAt,
+          updatedAt: r.updatedAt,
+          synced: r.synced,
+        )).toList(),
+      );
+    });
+  }
+
   // --- MAP MAPPERS ---
   Course _courseFromRow(CourseRow row) {
     return Course(

@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Student Attendance Check-In Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070d18;
+      --card-bg: rgba(18, 26, 43, 0.88);
+      --border: rgba(255, 255, 255, 0.1);
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.25);
+      --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.22);
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 20px 16px 40px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Ambient glow circles */
+    body::before, body::after {
+      content: '';
+      position: absolute;
+      width: 340px;
+      height: 340px;
+      border-radius: 50%;
+      filter: blur(120px);
+      z-index: 0;
+      pointer-events: none;
+    }
+    body::before {
+      background: radial-gradient(circle, #2563eb, transparent 70%);
+      top: -80px;
+      left: -80px;
+      opacity: 0.28;
+    }
+    body::after {
+      background: radial-gradient(circle, #38bdf8, transparent 70%);
+      bottom: -80px;
+      right: -80px;
+      opacity: 0.2;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 24px 20px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      position: relative;
+      z-index: 1;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 100px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1.25;
+      letter-spacing: -0.3px;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .course-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    .session-info-card {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 12px 16px;
+      margin-bottom: 18px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    .info-val {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    /* Tab Switcher */
+    .tab-nav {
+      display: flex;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 4px;
+      margin-bottom: 18px;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 9px 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12.5px;
+      font-weight: 700;
+      font-family: inherit;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .tab-btn.active {
+      background: rgba(56, 189, 248, 0.16);
+      color: #ffffff;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Anti-Proxy Guard Box */
+    .anti-proxy-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-bottom: 16px;
+    }
+
+    .anti-proxy-banner svg {
+      flex-shrink: 0;
+      color: #f87171;
+      margin-top: 1px;
+    }
+
+    .anti-proxy-text {
+      font-size: 11px;
+      color: #fca5a5;
+      line-height: 1.45;
+    }
+
+    /* Search bar */
+    .search-box {
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 46px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      color: #ffffff;
+      padding: 0 16px 0 42px;
+      font-size: 14px;
+      font-family: inherit;
+      font-weight: 600;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    /* Student Roster List */
+    .roster-list {
+      max-height: 380px;
+      overflow-y: auto;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(10, 16, 28, 0.6);
+      padding: 6px;
+      margin-bottom: 16px;
+    }
+
+    .roster-list::-webkit-scrollbar {
+      width: 5px;
+    }
+    .roster-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+    }
+
+    .student-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-radius: 12px;
+      margin-bottom: 4px;
+      background: rgba(18, 26, 43, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .student-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .student-item:hover:not(.signed) {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.3);
+      transform: translateX(2px);
+    }
+
+    .student-item.signed {
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(16, 185, 129, 0.25);
+      cursor: not-allowed;
+      opacity: 0.85;
+    }
+
+    .student-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .student-name {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .student-matric {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+    }
+
+    .student-action {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tick-box {
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .student-item:hover .tick-box {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .student-item.signed .tick-box {
+      border-color: var(--success);
+      background: var(--success);
+      color: #ffffff;
+    }
+
+    .signed-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Verification Modal (Claim Sheet) */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 420px;
+      background: #111a2e;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 24px;
+      padding: 24px 20px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+      animation: zoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes zoomIn {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .modal-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .target-student-badge {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+    }
+
+    .target-student-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .target-student-matric {
+      font-size: 11.5px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"], input[type="tel"] {
+      width: 100%;
+      height: 48px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      color: #ffffff;
+      padding: 0 14px;
+      font-size: 14px;
+      font-family: inherit;
+      font-weight: 600;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .pin-input {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px !important;
+      letter-spacing: 5px;
+      text-align: center;
+    }
+
+    .btn-submit {
+      width: 100%;
+      height: 48px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      border: none;
+      border-radius: 14px;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 14.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+      margin-top: 14px;
+      transition: all 0.2s;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(37, 99, 235, 0.5);
+    }
+
+    .btn-cancel {
+      width: 100%;
+      height: 40px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    /* Error alert */
+    .error-msg {
+      background: rgba(239, 68, 68, 0.16);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      margin-bottom: 14px;
+      display: none;
+      line-height: 1.4;
+    }
+
+    /* Success confirmation view */
+    .success-card {
+      display: none;
+      text-align: center;
+      padding: 12px 0;
+    }
+
+    .success-icon-wrap {
+      width: 72px;
+      height: 72px;
+      background: var(--success-glow);
+      border: 2px solid var(--success);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.3); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .receipt-box {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px dashed rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: left;
+      margin: 18px 0;
+    }
+
+    .receipt-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 12.5px;
+    }
+    .receipt-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .receipt-label { color: var(--text-muted); }
+    .receipt-val {
+      font-weight: 700;
+      color: #ffffff;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .device-lock-notice {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .footer-brand {
+      margin-top: 24px;
+      font-size: 11px;
+      color: #64748b;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Main Content View -->
+    <div id="mainContentView">
+      <div class="header-badge">
+        <span class="pulse-dot"></span>
+        Live Attendance Gateway
+      </div>
+
+      <h1 id="courseCodeDisplay">CSC 401</h1>
+      <p class="course-subtitle" id="courseTitleDisplay">Advanced Software Engineering</p>
+
+      <div class="session-info-card">
+        <div class="info-item">
+          <span class="info-label">Class Session</span>
+          <span class="info-val" id="classNumDisplay">Lecture #1</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Date</span>
+          <span class="info-val" id="dateDisplay">Today</span>
+        </div>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="tab-nav">
+        <button class="tab-btn active" id="tabRosterBtn" onclick="switchTab('roster')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <polyline points="16 11 18 13 22 9"/>
+          </svg>
+          Tick Name on Roster
+        </button>
+        <button class="tab-btn" id="tabDirectBtn" onclick="switchTab('direct')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+          Direct Matric Form
+        </button>
+      </div>
+
+      <!-- Anti-Proxy Warning -->
+      <div class="anti-proxy-banner">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span class="anti-proxy-text">
+          <strong>1 Student Per Device:</strong> Proxy signing is strictly blocked. This phone will lock to your submission only; signing for another student is rejected.
+        </span>
+      </div>
+
+      <div id="generalErrorBox" class="error-msg"></div>
+
+      <!-- Tab 1: Roster View (Tick Your Name) -->
+      <div id="rosterSection">
+        <div class="search-box">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input 
+            type="text" 
+            id="rosterSearchInput" 
+            class="search-input" 
+            placeholder="Type your name to find on roster..."
+            oninput="handleRosterSearch(this.value)"
+          >
+        </div>
+
+        <div id="rosterListContainer" class="roster-list">
+          <!-- Dynamic students will populate here -->
+          <div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px;">
+            Loading class roster...
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Direct Matric Form -->
+      <div id="directSection" style="display: none;">
+        <form id="directForm" onsubmit="handleDirectSubmit(event)">
+          <div class="form-group">
+            <label for="directMatric">Student Matriculation Number</label>
+            <input 
+              type="text" 
+              id="directMatric" 
+              placeholder="e.g. 2021/1/12345" 
+              style="text-transform: uppercase; font-family: 'JetBrains Mono', monospace;"
+              required
+            >
+          </div>
+          <div class="form-group">
+            <label for="directPin">4-Digit Security Session PIN</label>
+            <input 
+              type="tel" 
+              id="directPin" 
+              class="pin-input" 
+              placeholder="••••" 
+              maxlength="4" 
+              required
+            >
+          </div>
+          <button type="submit" class="btn-submit" id="directSubmitBtn">
+            <span>Verify & Mark Present</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Success Confirmation Screen -->
+    <div id="successView" class="success-card">
+      <div class="success-icon-wrap">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+
+      <h2 style="font-size: 21px; font-weight: 800; color: #ffffff; margin-bottom: 4px;">Attendance Confirmed!</h2>
+      <p style="font-size: 13px; color: var(--text-muted);">You have been marked present on the lecturer's terminal.</p>
+
+      <div class="receipt-box">
+        <div class="receipt-row">
+          <span class="receipt-label">Student Name</span>
+          <span class="receipt-val" id="receiptName">Kehinde Adebayo</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-label">Matric Number</span>
+          <span class="receipt-val" id="receiptMatric">2021/1/12345</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-label">Course</span>
+          <span class="receipt-val" id="receiptCourse">CSC 401</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-label">Session</span>
+          <span class="receipt-val" id="receiptSession">Class #1</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-label">Timestamp</span>
+          <span class="receipt-val" id="receiptTime">10:45 AM</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-label">Digital Token</span>
+          <span class="receipt-val" id="receiptToken" style="font-size: 11px;">#VER-84920</span>
+        </div>
+      </div>
+
+      <div class="device-lock-notice">
+        🔒 <strong>Device Locked:</strong> This phone is registered to your matric number for this session. Keep this receipt for verification.
+      </div>
+    </div>
+  </div>
+
+  <!-- Verification Modal for Ticking Name -->
+  <div class="modal-overlay" id="verificationModal">
+    <div class="modal-card">
+      <h3 class="modal-title">Confirm Attendance</h3>
+      <p class="modal-subtitle">Verify your identity to claim this attendance record:</p>
+
+      <div class="target-student-badge">
+        <div class="target-student-name" id="modalStudentName">ADEBAYO, Kehinde</div>
+        <div class="target-student-matric" id="modalStudentMatric">Matric: 2021/1/•••••</div>
+      </div>
+
+      <div id="modalErrorBox" class="error-msg"></div>
+
+      <form id="modalForm" onsubmit="handleModalSubmit(event)">
+        <div class="form-group">
+          <label for="modalMatricConfirm">Your Full Matric Number</label>
+          <input 
+            type="text" 
+            id="modalMatricConfirm" 
+            placeholder="Enter your matric to confirm" 
+            style="text-transform: uppercase; font-family: 'JetBrains Mono', monospace;"
+            required
+            autocomplete="off"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="modalPinConfirm">4-Digit Security Session PIN</label>
+          <input 
+            type="tel" 
+            id="modalPinConfirm" 
+            class="pin-input" 
+            placeholder="••••" 
+            maxlength="4" 
+            required
+            autocomplete="off"
+          >
+        </div>
+
+        <button type="submit" class="btn-submit" id="modalSubmitBtn">
+          <span>Confirm & Sign Present</span>
+        </button>
+        <button type="button" class="btn-cancel" onclick="closeVerificationModal()">
+          Cancel
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="footer-brand">
+    Lecturer Attendance Management System • Official Student Gateway
+  </div>
+
+  <script>
+    // Supabase Configuration
+    const SUPABASE_URL = "https://loinljaeiqxknnfjaqfd.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_-E5fFgUO7vCf69oOJ5TUBg_74kmAKcT";
+
+    // URL Parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const courseId = urlParams.get('courseId') || 'demo-course';
+    const courseCode = urlParams.get('courseCode') || 'CSC 401';
+    const courseTitle = urlParams.get('courseTitle') || 'Course Lecture';
+    const classNum = urlParams.get('classNum') || '1';
+    const expectedPin = urlParams.get('pin') || '';
+    const sessionId = urlParams.get('sessionId') || '';
+
+    // Initialize UI
+    document.getElementById('courseCodeDisplay').innerText = courseCode;
+    document.getElementById('courseTitleDisplay').innerText = courseTitle;
+    document.getElementById('classNumDisplay').innerText = `Lecture #${classNum}`;
+    document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    // Anti-Proxy Device Lock Key
+    const deviceStorageKey = `att_device_lock_${courseId}_${classNum}`;
+    let registeredDeviceSubmission = localStorage.getItem(deviceStorageKey);
+
+    let allStudents = [];
+    let signedStudentIds = new Set();
+    let selectedStudent = null;
+
+    // Switch between Roster view and Direct Matric form
+    function switchTab(tab) {
+      document.getElementById('tabRosterBtn').classList.toggle('active', tab === 'roster');
+      document.getElementById('tabDirectBtn').classList.toggle('active', tab === 'direct');
+      document.getElementById('rosterSection').style.display = tab === 'roster' ? 'block' : 'none';
+      document.getElementById('directSection').style.display = tab === 'direct' ? 'block' : 'none';
+    }
+
+    // Load initial student roster
+    async function loadRoster() {
+      // 1. Check if device already signed
+      if (registeredDeviceSubmission) {
+        try {
+          const parsed = JSON.parse(registeredDeviceSubmission);
+          showSuccessView(parsed.name, parsed.matric, parsed.time, parsed.hash);
+          return;
+        } catch (e) {}
+      }
+
+      // 2. Fetch students from Supabase
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/students?course_id=eq.${encodeURIComponent(courseId)}&select=id,name,matric_number&order=name.asc`, {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+          }
+        });
+
+        if (res.ok) {
+          allStudents = await res.json();
+        }
+      } catch (err) {
+        console.warn("Could not load from Supabase:", err);
+      }
+
+      // If no students found from Supabase (or demo mode), create demo roster
+      if (!allStudents || allStudents.length === 0) {
+        allStudents = [
+          { id: '1', name: 'ADEBAYO, Kehinde', matric_number: '2021/1/10001' },
+          { id: '2', name: 'CHUKWUMA, Emeka Peter', matric_number: '2021/1/10002' },
+          { id: '3', name: 'IBRAHIM, Zainab Aisha', matric_number: '2021/1/10003' },
+          { id: '4', name: 'NWOSU, Chioma Mary', matric_number: '2021/1/10004' },
+          { id: '5', name: 'OGUNLEWE, Babatunde', matric_number: '2021/1/10005' },
+          { id: '6', name: 'OKON, Aniefiok Daniel', matric_number: '2021/1/10006' },
+          { id: '7', name: 'YUSUF, Farouk Aliyu', matric_number: '2021/1/10007' }
+        ];
+      }
+
+      // 3. Fetch signed records for session
+      if (sessionId) {
+        try {
+          const recRes = await fetch(`${SUPABASE_URL}/rest/v1/attendance_records?attendance_session_id=eq.${encodeURIComponent(sessionId)}&select=student_id`, {
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+          });
+          if (recRes.ok) {
+            const records = await recRes.json();
+            records.forEach(r => signedStudentIds.add(r.student_id));
+          }
+        } catch (e) {}
+      }
+
+      renderRosterList(allStudents);
+    }
+
+    function renderRosterList(students) {
+      const container = document.getElementById('rosterListContainer');
+      if (students.length === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px;">No student matching search</div>`;
+        return;
+      }
+
+      container.innerHTML = students.map(s => {
+        const isSigned = signedStudentIds.has(s.id);
+        const maskedMatric = s.matric_number ? s.matric_number.substring(0, 7) + '••••' : '••••••••';
+
+        return `
+          <div class="student-item ${isSigned ? 'signed' : ''}" onclick="${isSigned ? '' : `openVerificationModal('${s.id}')`}">
+            <div class="student-info">
+              <span class="student-name">${s.name}</span>
+              <span class="student-matric">${maskedMatric}</span>
+            </div>
+            <div class="student-action">
+              ${isSigned 
+                ? `<span class="signed-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Present</span>`
+                : `<div class="tick-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3;"><polyline points="20 6 9 17 4 12"/></svg></div>`
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function handleRosterSearch(q) {
+      const term = q.trim().toLowerCase();
+      if (!term) {
+        renderRosterList(allStudents);
+        return;
+      }
+      const filtered = allStudents.filter(s => 
+        s.name.toLowerCase().includes(term) || (s.matric_number && s.matric_number.toLowerCase().includes(term))
+      );
+      renderRosterList(filtered);
+    }
+
+    // Open identity verification modal for a specific student
+    function openVerificationModal(studentId) {
+      // 1. Anti-Proxy Rule 1: Check if this physical phone already signed for ANY student
+      if (localStorage.getItem(deviceStorageKey)) {
+        showGeneralError("🚫 Anti-Proxy Protection: This phone has already submitted attendance for another student. Only ONE student can sign per phone.");
+        return;
+      }
+
+      selectedStudent = allStudents.find(s => s.id === studentId);
+      if (!selectedStudent) return;
+
+      document.getElementById('modalStudentName').innerText = selectedStudent.name;
+      document.getElementById('modalStudentMatric').innerText = `Matric: ${selectedStudent.matric_number ? selectedStudent.matric_number.substring(0, 6) + '•••••' : 'Required'}`;
+      document.getElementById('modalMatricConfirm').value = '';
+      document.getElementById('modalPinConfirm').value = '';
+      document.getElementById('modalErrorBox').style.display = 'none';
+
+      document.getElementById('verificationModal').style.display = 'flex';
+    }
+
+    function closeVerificationModal() {
+      document.getElementById('verificationModal').style.display = 'none';
+      selectedStudent = null;
+    }
+
+    async function handleModalSubmit(e) {
+      e.preventDefault();
+      if (!selectedStudent) return;
+
+      const matricConfirm = document.getElementById('modalMatricConfirm').value.trim().toUpperCase();
+      const pinConfirm = document.getElementById('modalPinConfirm').value.trim();
+      const errBox = document.getElementById('modalErrorBox');
+
+      // 1. Verify Matric Number matches selected student
+      if (selectedStudent.matric_number && matricConfirm !== selectedStudent.matric_number.toUpperCase()) {
+        errBox.innerText = `Matriculation number does not match ${selectedStudent.name}. You cannot claim someone else's name!`;
+        errBox.style.display = 'block';
+        return;
+      }
+
+      // 2. Verify Session Security PIN
+      if (expectedPin && pinConfirm !== expectedPin) {
+        errBox.innerText = "Invalid 4-digit Security PIN! Check the PIN projected on the lecturer's screen.";
+        errBox.style.display = 'block';
+        return;
+      }
+
+      // 3. Final Device Lock check
+      if (localStorage.getItem(deviceStorageKey)) {
+        errBox.innerText = "Anti-Proxy Alert: This device has already been used to record attendance.";
+        errBox.style.display = 'block';
+        return;
+      }
+
+      const submitBtn = document.getElementById('modalSubmitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Verifying & Recording...</span>';
+
+      await finalizeAttendance(selectedStudent.name, matricConfirm, selectedStudent.id);
+    }
+
+    async function handleDirectSubmit(e) {
+      e.preventDefault();
+      const matric = document.getElementById('directMatric').value.trim().toUpperCase();
+      const pin = document.getElementById('directPin').value.trim();
+
+      if (expectedPin && pin !== expectedPin) {
+        showGeneralError("Invalid Security PIN! Please check the PIN projected on the lecturer's screen.");
+        return;
+      }
+
+      if (localStorage.getItem(deviceStorageKey)) {
+        showGeneralError("Anti-Proxy Alert: This phone has already submitted attendance for this class.");
+        return;
+      }
+
+      // Find in roster
+      const match = allStudents.find(s => s.matric_number && s.matric_number.toUpperCase() === matric);
+      const studentName = match ? match.name : matric;
+      const studentId = match ? match.id : crypto.randomUUID();
+
+      await finalizeAttendance(studentName, matric, studentId);
+    }
+
+    async function finalizeAttendance(name, matric, studentId) {
+      const receiptHash = '#VER-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      const recordTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      // Record to Supabase
+      if (sessionId) {
+        try {
+          await fetch(`${SUPABASE_URL}/rest/v1/attendance_records`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({
+              id: crypto.randomUUID(),
+              attendance_session_id: sessionId,
+              student_id: studentId,
+              status: 'present',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+          });
+        } catch (err) {
+          console.warn("Supabase record write note:", err);
+        }
+      }
+
+      // 4. Lock this physical device permanently for this session
+      const lockPayload = {
+        name: name,
+        matric: matric,
+        time: recordTime,
+        hash: receiptHash,
+        date: new Date().toISOString()
+      };
+      localStorage.setItem(deviceStorageKey, JSON.stringify(lockPayload));
+
+      signedStudentIds.add(studentId);
+      closeVerificationModal();
+      showSuccessView(name, matric, recordTime, receiptHash);
+    }
+
+    function showGeneralError(msg) {
+      const b = document.getElementById('generalErrorBox');
+      b.innerText = msg;
+      b.style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showSuccessView(name, matric, time, hash) {
+      document.getElementById('mainContentView').style.display = 'none';
+      document.getElementById('successView').style.display = 'block';
+
+      document.getElementById('receiptName').innerText = name;
+      document.getElementById('receiptMatric').innerText = matric;
+      document.getElementById('receiptCourse').innerText = courseCode;
+      document.getElementById('receiptSession').innerText = `Class #${classNum}`;
+      document.getElementById('receiptTime').innerText = time;
+      document.getElementById('receiptToken').innerText = hash;
+    }
+
+    // Start loading on page load
+    loadRoster();
+  </script>
+</body>
+</html>

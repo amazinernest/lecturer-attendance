@@ -27,9 +27,10 @@ final syncServiceProvider = ChangeNotifierProvider<SyncService>((ref) {
 class CurrentUserNotifier extends StateNotifier<LecturerUser?> {
   final AuthService _authService;
   final AppDatabase _db;
+  final SyncService? _syncService;
   StreamSubscription? _authSub;
 
-  CurrentUserNotifier(this._authService, this._db) : super(null) {
+  CurrentUserNotifier(this._authService, this._db, [this._syncService]) : super(null) {
     _init();
   }
 
@@ -38,6 +39,7 @@ class CurrentUserNotifier extends StateNotifier<LecturerUser?> {
     if (user != null) {
       state = user;
       await _db.saveUser(user);
+      _syncService?.syncNow(lecturerId: user.id);
     }
 
     _authSub = _authService.authStateChanges?.listen((data) async {
@@ -45,6 +47,7 @@ class CurrentUserNotifier extends StateNotifier<LecturerUser?> {
       if (updatedUser != null) {
         state = updatedUser;
         await _db.saveUser(updatedUser);
+        _syncService?.syncNow(lecturerId: updatedUser.id);
       } else if (data.session == null) {
         state = null;
       }
@@ -63,6 +66,7 @@ class CurrentUserNotifier extends StateNotifier<LecturerUser?> {
     );
     state = user;
     await _db.saveUser(user);
+    _syncService?.syncNow(lecturerId: user.id);
   }
 
   Future<void> signUpWithEmail({
@@ -80,6 +84,7 @@ class CurrentUserNotifier extends StateNotifier<LecturerUser?> {
     if (currentUser != null) {
       state = currentUser;
       await _db.saveUser(currentUser);
+      _syncService?.syncNow(lecturerId: currentUser.id);
     }
   }
 
@@ -102,7 +107,8 @@ class CurrentUserNotifier extends StateNotifier<LecturerUser?> {
 final currentUserProvider = StateNotifierProvider<CurrentUserNotifier, LecturerUser?>((ref) {
   final auth = ref.watch(authServiceProvider);
   final db = ref.watch(databaseProvider);
-  return CurrentUserNotifier(auth, db);
+  final syncService = ref.read(syncServiceProvider);
+  return CurrentUserNotifier(auth, db, syncService);
 });
 
 final coursesStreamProvider = StreamProvider.autoDispose<List<Course>>((ref) {

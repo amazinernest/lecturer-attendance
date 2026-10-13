@@ -6,11 +6,13 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/providers.dart';
+import '../../../core/utils/report_exporter.dart';
 import '../../../shared/models/course.dart';
 import '../../../shared/models/student.dart';
 import '../../../shared/models/attendance_session.dart';
 import '../../../shared/models/attendance_record.dart';
 import '../../../shared/widgets/attendance_toggle.dart';
+import 'widgets/live_qr_attendance_sheet.dart';
 
 class RecordAttendanceScreen extends ConsumerStatefulWidget {
   final String courseId;
@@ -183,6 +185,80 @@ class _RecordAttendanceScreenState
         sessionDate: _sessionDate,
         onDateSelected: (newDate) {
           setState(() => _sessionDate = newDate);
+        },
+        onExportPdf: _exportDailySessionPdf,
+      ),
+    );
+  }
+
+  Future<void> _exportDailySessionPdf() async {
+    if (_course == null || _students.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No students to export for this course.')),
+      );
+      return;
+    }
+
+    final classNum = int.tryParse(_classNumberController.text.trim()) ?? 1;
+    final topic = _topicController.text.trim().isNotEmpty
+        ? _topicController.text.trim()
+        : 'Regular Lecture';
+
+    final tempSession = AttendanceSession(
+      id: widget.existingSessionId ?? _uuid.v4(),
+      courseId: widget.courseId,
+      classNumber: classNum,
+      date: _sessionDate,
+      topic: topic,
+      createdAt: DateTime.now(),
+      synced: false,
+    );
+
+    try {
+      final pdfBytes = await ReportExporter.generateSessionAttendancePdf(
+        course: _course!,
+        session: tempSession,
+        students: _students,
+        attendanceMap: _attendanceStatusMap,
+      );
+
+      await ReportExporter.printOrSharePdf(
+        pdfBytes: pdfBytes,
+        filename: '${_course!.courseCode}_Class${classNum}_Attendance_Log',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate session PDF: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showLiveQrModal() {
+    if (_course == null) return;
+    final classNum = int.tryParse(_classNumberController.text.trim()) ?? 1;
+    final sessionId = widget.existingSessionId ?? _uuid.v4();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => LiveQrAttendanceSheet(
+        course: _course!,
+        classNumber: classNum,
+        topic: _topicController.text.trim(),
+        sessionDate: _sessionDate,
+        students: _students,
+        initialStatusMap: _attendanceStatusMap,
+        sessionId: sessionId,
+        onAttendanceUpdated: (updatedMap) {
+          setState(() {
+            _attendanceStatusMap = Map.from(updatedMap);
+          });
         },
       ),
     );
@@ -402,6 +478,50 @@ class _RecordAttendanceScreenState
                             ],
                           ),
                         ),
+                        // Live QR Check-In Trigger Pill
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: _showLiveQrModal,
+                            borderRadius: BorderRadius.circular(100),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF38BDF8)
+                                    .withValues(alpha: 0.22),
+                                borderRadius: BorderRadius.circular(100),
+                                border: Border.all(
+                                  color: const Color(0xFF38BDF8)
+                                      .withValues(alpha: 0.45),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Icon(
+                                    Icons.qr_code_2_rounded,
+                                    size: 15,
+                                    color: Color(0xFF7DD3FC),
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Live QR',
+                                    style: TextStyle(
+                                      fontFamily: AppTypography.fontFamily,
+                                      color: Colors.white,
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+
                         // Session Config Trigger Pill
                         Material(
                           color: Colors.transparent,
@@ -802,7 +922,36 @@ class _RecordAttendanceScreenState
                     ],
                   ),
 
-                  const SizedBox(width: 20),
+                  const SizedBox(width: 14),
+
+                  // Live QR & Print Quick Button
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _showLiveQrModal,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        height: 50,
+                        width: 50,
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceVariant,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(0xFF2563EB).withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.qr_code_2_rounded,
+                            color: Color(0xFF2563EB),
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 10),
 
                   // Save & Finalize Attendance CTA
                   Expanded(
@@ -1204,12 +1353,14 @@ class _SessionConfigModal extends StatefulWidget {
   final TextEditingController topicController;
   final DateTime sessionDate;
   final ValueChanged<DateTime> onDateSelected;
+  final VoidCallback? onExportPdf;
 
   const _SessionConfigModal({
     required this.classNumberController,
     required this.topicController,
     required this.sessionDate,
     required this.onDateSelected,
+    this.onExportPdf,
   });
 
   @override
@@ -1405,6 +1556,36 @@ class _SessionConfigModalState extends State<_SessionConfigModal> {
               ),
 
               const SizedBox(height: 20),
+
+              if (widget.onExportPdf != null) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      widget.onExportPdf!();
+                    },
+                    icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                    label: const Text(
+                      'Export Daily Attendance Log (PDF)',
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.5,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF2563EB),
+                      side: const BorderSide(color: Color(0xFF2563EB)),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
 
               SizedBox(
                 width: double.infinity,
