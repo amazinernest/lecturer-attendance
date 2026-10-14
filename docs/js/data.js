@@ -50,6 +50,15 @@ export class DataService {
       }
     }
 
+    // Deduplicate courses
+    const seen = new Set();
+    courses = courses.filter(c => {
+      const key = (c.id || '') + '_' + (c.courseCode || '');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
     return courses;
   }
 
@@ -135,6 +144,18 @@ export class DataService {
       const local = localStorage.getItem(`${LOCAL_STORAGE_STUDENTS}_${courseId}`);
       if (local) {
         students = JSON.parse(local);
+      } else {
+        // Initial institutional class roster
+        students = [
+          { id: 'std_1', courseId, name: 'ADEBAYO, Kehinde Oluwaseun', matricNumber: '2021/1/10001' },
+          { id: 'std_2', courseId, name: 'CHUKWUMA, Emeka Peter', matricNumber: '2021/1/10002' },
+          { id: 'std_3', courseId, name: 'IBRAHIM, Zainab Aisha', matricNumber: '2021/1/10003' },
+          { id: 'std_4', courseId, name: 'NWOSU, Chioma Mary', matricNumber: '2021/1/10004' },
+          { id: 'std_5', courseId, name: 'OGUNLEWE, Babatunde Joseph', matricNumber: '2021/1/10005' },
+          { id: 'std_6', courseId, name: 'OKON, Aniefiok Daniel', matricNumber: '2021/1/10006' },
+          { id: 'std_7', courseId, name: 'YUSUF, Farouk Aliyu', matricNumber: '2021/1/10007' }
+        ];
+        localStorage.setItem(`${LOCAL_STORAGE_STUDENTS}_${courseId}`, JSON.stringify(students));
       }
     }
 

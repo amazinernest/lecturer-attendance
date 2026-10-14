@@ -137,6 +137,42 @@ class App {
       });
     }
 
+    // Quick Class List Document Upload Modal bindings
+    const quickDropzone = document.getElementById('quickDropzone');
+    const quickFileInput = document.getElementById('quickClassFileInput');
+    const quickConfirmBtn = document.getElementById('quickUploadConfirmBtn');
+
+    if (quickDropzone && quickFileInput) {
+      quickDropzone.addEventListener('click', () => quickFileInput.click());
+      quickFileInput.addEventListener('change', e => {
+        if (e.target.files.length > 0) this.handleQuickFileSelected(e.target.files[0]);
+      });
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        quickDropzone.addEventListener(eventName, e => {
+          e.preventDefault();
+          quickDropzone.classList.add('dragover');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        quickDropzone.addEventListener(eventName, e => {
+          e.preventDefault();
+          quickDropzone.classList.remove('dragover');
+        });
+      });
+
+      quickDropzone.addEventListener('drop', e => {
+        if (e.dataTransfer.files.length > 0) {
+          this.handleQuickFileSelected(e.dataTransfer.files[0]);
+        }
+      });
+    }
+
+    if (quickConfirmBtn) {
+      quickConfirmBtn.addEventListener('click', () => this.confirmQuickUpload());
+    }
+
     // Modal Close buttons
     document.querySelectorAll('.modal-close-trigger').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -344,10 +380,10 @@ class App {
 
     if (courses.length === 0) {
       container.innerHTML = `
-        <div style="grid-column: 1/-1; text-align: center; padding: 48px; background: rgba(15,23,42,0.6); border-radius: 16px; border: 1px dashed rgba(255,255,255,0.1);">
+        <div style="grid-column: 1/-1; text-align: center; padding: 48px; background: #ffffff; border-radius: 16px; border: 1px dashed #cbd5e1; box-shadow: var(--shadow-sm);">
           <div style="font-size: 40px; margin-bottom: 12px;">📚</div>
-          <h3 style="font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 6px;">No courses created yet</h3>
-          <p style="color: #94a3b8; font-size: 13.5px; margin-bottom: 18px;">Create your first academic course to begin tracking student attendance.</p>
+          <h3 style="font-size: 18px; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">No courses created yet</h3>
+          <p style="color: var(--text-secondary); font-size: 13.5px; margin-bottom: 18px;">Create your first academic course to begin tracking student attendance.</p>
           <button class="btn btn-primary" onclick="window.app.openCreateCourseModal()">+ Create First Course</button>
         </div>
       `;
@@ -448,6 +484,7 @@ class App {
 
     this._updateRollCallStats();
     this.renderRollCallTable();
+    this.updateClassSessionDetails();
   }
 
   static renderRollCallTable(filter = 'all', search = '') {
@@ -467,9 +504,9 @@ class App {
     if (this.activeStudents.length === 0) {
       tableBody.innerHTML = `
         <tr>
-          <td colspan="5" style="text-align: center; padding: 48px; color: #94a3b8;">
+          <td colspan="5" style="text-align: center; padding: 48px; color: var(--text-secondary);">
             <div style="font-size: 32px; margin-bottom: 8px;">👥</div>
-            <div style="font-weight: 700; color: #fff; margin-bottom: 4px;">No students enrolled in this course yet</div>
+            <div style="font-weight: 800; color: var(--text-main); margin-bottom: 4px;">No students enrolled in this course yet</div>
             <div style="font-size: 13px; margin-bottom: 16px;">Upload your Excel/CSV class list or import students to take roll call.</div>
             <button class="btn btn-primary" onclick="window.app.openImporterForCourse('${this.activeCourseId}')">
               Import Class List Now
@@ -487,10 +524,10 @@ class App {
         <tr>
           <td style="color: #64748b; font-weight: 700; width: 40px;">${idx + 1}</td>
           <td>
-            <div style="font-weight: 700; color: #ffffff;">${s.name}</div>
+            <div style="font-weight: 700; color: var(--text-main);">${s.name}</div>
           </td>
           <td>
-            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: #38bdf8; background: rgba(56,189,248,0.1); padding: 3px 8px; border-radius: 4px;">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: #0284c7; background: #f0f9ff; border: 1px solid #bae6fd; padding: 3px 8px; border-radius: 4px;">
               ${s.matricNumber}
             </span>
           </td>
@@ -652,6 +689,300 @@ class App {
   }
 
   // ==========================================
+  // PER-CLASS SESSION SHARING & ANTI-PROXY CONTROLS
+  // ==========================================
+
+  static async updateClassSessionDetails() {
+    if (!this.activeCourseId) return;
+
+    if (!this.courses || this.courses.length === 0) {
+      this.courses = await DataService.getCourses();
+    }
+    const course = this.courses.find(c => c.id === this.activeCourseId) || (await DataService.getCourseById(this.activeCourseId));
+    if (!course) return;
+
+    const classNumber = parseInt(document.getElementById('attClassNumberInput')?.value) || 1;
+    this.currentSessionId = this.currentSessionId || ('sess_' + this.activeCourseId + '_L' + classNumber);
+
+    // Formulate responsive check-in URL matching host (handles localhost, LAN IP, and GitHub Pages)
+    let checkinPath = '/docs/checkin/';
+    if (window.location.hostname.includes('github.io')) {
+      checkinPath = '/lecturer-attendance/docs/checkin/';
+    } else {
+      const path = window.location.pathname;
+      if (path.includes('/docs')) {
+        checkinPath = path.substring(0, path.indexOf('/docs')) + '/docs/checkin/';
+      }
+    }
+
+    const checkinUrl = `${window.location.origin}${checkinPath}?courseId=${encodeURIComponent(course.id)}&courseCode=${encodeURIComponent(course.courseCode)}&courseTitle=${encodeURIComponent(course.courseTitle)}&classNum=${classNumber}&sessionId=${encodeURIComponent(this.currentSessionId)}`;
+
+    // Update input link
+    const linkInput = document.getElementById('sessionClassLinkInput');
+    if (linkInput) linkInput.value = checkinUrl;
+
+    // Update session number badge
+    const sessionNumBadge = document.getElementById('sessionNumBadge');
+    if (sessionNumBadge) sessionNumBadge.innerText = `Lecture #${classNumber}`;
+
+    // Render session QR code (110x110)
+    const qrContainer = document.getElementById('sessionInlineQrCode');
+    if (qrContainer && window.QRCode) {
+      qrContainer.innerHTML = '';
+      new window.QRCode(qrContainer, {
+        text: checkinUrl,
+        width: 110,
+        height: 110,
+        colorDark: "#0f172a",
+        colorLight: "#ffffff",
+        correctLevel: window.QRCode.CorrectLevel.M
+      });
+    }
+
+    // Update open/closed status badge
+    this._renderSessionLockState();
+
+    // Listen for live student check-ins on this session
+    this._subscribeToSessionCheckIns();
+  }
+
+  static _renderSessionLockState() {
+    if (!this.currentSessionId) return;
+    const isClosed = localStorage.getItem('session_open_' + this.currentSessionId) === 'false';
+
+    const statusBadge = document.getElementById('sessionActiveStatusBadge');
+    const statusText = document.getElementById('sessionStatusText');
+    const lockBtn = document.getElementById('toggleSessionLockBtn');
+    const lockBtnText = document.getElementById('sessionLockBtnText');
+
+    if (isClosed) {
+      if (statusBadge) {
+        statusBadge.style.background = '#fff1f2';
+        statusBadge.style.borderColor = '#fecdd3';
+        statusBadge.style.color = '#e11d48';
+      }
+      if (statusText) statusText.innerText = 'Check-Ins Closed';
+      if (lockBtn) {
+        lockBtn.className = 'btn btn-emerald';
+        lockBtn.style.padding = '8px 14px';
+        lockBtn.style.fontSize = '12.5px';
+      }
+      if (lockBtnText) lockBtnText.innerText = '🔓 Reopen Check-Ins';
+    } else {
+      if (statusBadge) {
+        statusBadge.style.background = '#ecfdf5';
+        statusBadge.style.borderColor = '#a7f3d0';
+        statusBadge.style.color = '#059669';
+      }
+      if (statusText) statusText.innerText = 'Accepting Check-Ins';
+      if (lockBtn) {
+        lockBtn.className = 'btn btn-danger';
+        lockBtn.style.padding = '8px 14px';
+        lockBtn.style.fontSize = '12.5px';
+      }
+      if (lockBtnText) lockBtnText.innerText = '🔒 Close Check-Ins Now';
+    }
+  }
+
+  static toggleSessionCheckinsOpen() {
+    if (!this.currentSessionId) return;
+    const key = 'session_open_' + this.currentSessionId;
+    const isCurrentlyClosed = localStorage.getItem(key) === 'false';
+
+    if (isCurrentlyClosed) {
+      localStorage.setItem(key, 'true');
+    } else {
+      localStorage.setItem(key, 'false');
+    }
+    this._renderSessionLockState();
+  }
+
+  static async copyClassSessionLink() {
+    const linkInput = document.getElementById('sessionClassLinkInput');
+    if (!linkInput || !linkInput.value) return;
+
+    try {
+      await navigator.clipboard.writeText(linkInput.value);
+    } catch (e) {
+      linkInput.select();
+      document.execCommand('copy');
+    }
+
+    const btnText = document.getElementById('copyLinkBtnText');
+    if (btnText) {
+      const orig = btnText.innerText;
+      btnText.innerText = '✓ Copied Link!';
+      setTimeout(() => { btnText.innerText = orig; }, 2000);
+    }
+  }
+
+  static downloadQrCodeImage() {
+    const qrContainer = document.getElementById('sessionInlineQrCode');
+    if (!qrContainer) return;
+
+    const img = qrContainer.querySelector('img');
+    const canvas = qrContainer.querySelector('canvas');
+    let dataUrl = null;
+
+    if (canvas) {
+      dataUrl = canvas.toDataURL('image/png');
+    } else if (img && img.src) {
+      dataUrl = img.src;
+    }
+
+    if (!dataUrl) {
+      alert('QR code image is still generating. Please try again in a moment.');
+      return;
+    }
+
+    const course = this.courses.find(c => c.id === this.activeCourseId);
+    const code = course ? course.courseCode.replace(/[^a-zA-Z0-9]/g, '_') : 'Class';
+    const classNum = document.getElementById('attClassNumberInput')?.value || '1';
+
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `${code}_Lecture_${classNum}_QRCode.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  static _subscribeToSessionCheckIns() {
+    if (this.liveUnsubscribe) this.liveUnsubscribe();
+    if (!this.currentSessionId) return;
+
+    this.liveUnsubscribe = DataService.subscribeToLiveSessionCheckIns(this.currentSessionId, record => {
+      if (record && record.student_id) {
+        this.attendanceStatusMap[record.student_id] = 'present';
+        this._updateRollCallStats();
+        this.renderRollCallTable();
+        this._handleStudentLiveCheckIn(record);
+      }
+    });
+  }
+
+  // ==========================================
+  // QUICK CLASS LIST DOCUMENT UPLOAD MODAL
+  // ==========================================
+
+  static parsedQuickStudentsBuffer = [];
+
+  static openQuickUploadModal() {
+    if (!this.activeCourseId) {
+      alert('Please select or open a course first.');
+      return;
+    }
+    const course = this.courses.find(c => c.id === this.activeCourseId);
+    const titleEl = document.getElementById('quickUploadModalTitle');
+    if (titleEl && course) {
+      titleEl.innerText = `Upload Class List: ${course.courseCode}`;
+    }
+
+    this.parsedQuickStudentsBuffer = [];
+    const statusEl = document.getElementById('quickUploadStatus');
+    if (statusEl) {
+      statusEl.innerHTML = '';
+      statusEl.style.color = 'var(--text-main)';
+    }
+    const previewWrap = document.getElementById('quickUploadPreviewWrap');
+    if (previewWrap) previewWrap.style.display = 'none';
+
+    const fileInput = document.getElementById('quickClassFileInput');
+    if (fileInput) fileInput.value = '';
+
+    document.getElementById('quickUploadModal')?.classList.add('active');
+  }
+
+  static async handleQuickFileSelected(file) {
+    if (!file) return;
+    const statusEl = document.getElementById('quickUploadStatus');
+    const previewWrap = document.getElementById('quickUploadPreviewWrap');
+    const confirmBtn = document.getElementById('quickUploadConfirmBtn');
+
+    if (statusEl) {
+      statusEl.innerHTML = `<span style="color: var(--accent); font-weight: 700;">Parsing document: ${file.name}...</span>`;
+    }
+
+    try {
+      const existingStudents = this.activeStudents || [];
+      const result = await ClassListParser.parseFile(file, existingStudents);
+
+      if (result.validStudents.length === 0) {
+        if (statusEl) {
+          statusEl.innerHTML = `<span style="color: #e11d48; font-weight: 700;">⚠️ No valid student rows detected in file.</span>`;
+        }
+        if (previewWrap) previewWrap.style.display = 'none';
+        return;
+      }
+
+      this.parsedQuickStudentsBuffer = result.validStudents;
+
+      if (statusEl) {
+        statusEl.innerHTML = `
+          <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; text-align: left;">
+            <div style="color: #059669; font-weight: 800; font-size: 14.5px;">✓ Detected ${result.validCount} Students</div>
+            <div style="color: #047857; font-size: 12px; margin-top: 4px;">
+              ${result.newCount} new enrollments, ${result.existingCount} existing matches (${result.errors.length} skipped non-student rows)
+            </div>
+          </div>
+        `;
+      }
+
+      if (confirmBtn) {
+        const course = this.courses.find(c => c.id === this.activeCourseId);
+        confirmBtn.innerText = `Enroll ${result.validCount} Students into ${course ? course.courseCode : 'Course'}`;
+        confirmBtn.disabled = false;
+      }
+      if (previewWrap) previewWrap.style.display = 'block';
+
+    } catch (err) {
+      if (statusEl) {
+        statusEl.innerHTML = `<span style="color: #e11d48; font-weight: 700;">Failed to parse: ${err.message}</span>`;
+      }
+    }
+  }
+
+  static async confirmQuickUpload() {
+    if (!this.activeCourseId || this.parsedQuickStudentsBuffer.length === 0) return;
+
+    const confirmBtn = document.getElementById('quickUploadConfirmBtn');
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.innerText = 'Enrolling Students into Database...';
+    }
+
+    try {
+      await DataService.batchAddStudents(this.activeCourseId, this.parsedQuickStudentsBuffer);
+
+      // Reload active students for this course
+      this.activeStudents = await DataService.getStudentsForCourse(this.activeCourseId);
+      for (const s of this.activeStudents) {
+        if (!this.attendanceStatusMap[s.id]) {
+          this.attendanceStatusMap[s.id] = 'present';
+        }
+      }
+
+      // Close modal
+      document.getElementById('quickUploadModal')?.classList.remove('active');
+
+      // Update UI
+      this._updateRollCallStats();
+      this.renderRollCallTable();
+      this.updateClassSessionDetails();
+
+      alert(`Success! Enrolled ${this.parsedQuickStudentsBuffer.length} students into class roster.`);
+      this.parsedQuickStudentsBuffer = [];
+
+    } catch (e) {
+      alert(`Error enrolling students: ${e.message}`);
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.innerText = 'Retry Enrollment';
+      }
+    }
+  }
+
+  // ==========================================
   // CLASS LIST IMPORTER (EXCEL / CSV)
   // ==========================================
 
@@ -704,21 +1035,21 @@ class App {
       this.parsedStudentsBuffer = result.validStudents;
 
       statusText.innerHTML = `
-        <span style="color: #34d399; font-weight: 700;">✓ Detected ${result.validCount} Students</span>
-        <span style="color: #94a3b8; font-size: 12px; margin-left: 8px;">(${result.errors.length} skipped invalid rows)</span>
+        <span style="color: #059669; font-weight: 700;">✓ Detected ${result.validCount} Students</span>
+        <span style="color: var(--text-secondary); font-size: 12px; margin-left: 8px;">(${result.errors.length} skipped invalid rows)</span>
       `;
 
       previewTableBody.innerHTML = result.validStudents.slice(0, 100).map((s, idx) => `
         <tr>
           <td style="color: #64748b;">${idx + 1}</td>
-          <td style="font-weight: 700; color: #fff;">${s.name}</td>
+          <td style="font-weight: 700; color: var(--text-main);">${s.name}</td>
           <td>
-            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #38bdf8;">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #0284c7; background: #f0f9ff; border: 1px solid #bae6fd; padding: 2px 6px; border-radius: 4px;">
               ${s.matricNumber}
             </span>
           </td>
           <td>
-            <span style="font-size: 11px; padding: 3px 8px; border-radius: 4px; ${s.isExisting ? 'background: rgba(245,158,11,0.15); color: #fbbf24;' : 'background: rgba(16,185,129,0.15); color: #34d399;'}">
+            <span style="font-size: 11px; padding: 3px 8px; border-radius: 4px; ${s.isExisting ? 'background: #fffbeb; color: #d97706; border: 1px solid #fde68a;' : 'background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;'}">
               ${s.isExisting ? 'Update Existing' : 'New Enrollment'}
             </span>
           </td>

@@ -26,8 +26,8 @@
   <!-- ========================================================================
        JWT AUTHENTICATION OVERLAY (Shown when user is unauthenticated)
        ======================================================================== -->
-  <div id="authOverlay" style="position: fixed; inset: 0; background: #070d18; z-index: 5000; display: flex; align-items: center; justify-content: center; padding: 20px;">
-    <div style="background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 24px; padding: 36px 30px; max-width: 440px; width: 100%; box-shadow: 0 25px 60px rgba(0,0,0,0.7);">
+  <div id="authOverlay" style="position: fixed; inset: 0; background: var(--bg-primary); z-index: 5000; display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: #ffffff; border: 1px solid var(--border-subtle); border-radius: 24px; padding: 36px 30px; max-width: 440px; width: 100%; box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.1);">
       
       <!-- Brand Header -->
       <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 22px;">
@@ -38,17 +38,17 @@
           </svg>
         </div>
         <div>
-          <div style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #38bdf8;">Academic Portal</div>
-          <h2 style="font-size: 19px; font-weight: 800; color: #ffffff; letter-spacing: -0.3px;">Lecturer Attendance</h2>
+          <div style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent-cyan);">Academic Portal</div>
+          <h2 style="font-size: 19px; font-weight: 800; color: var(--text-main); letter-spacing: -0.3px;">Lecturer Attendance</h2>
         </div>
       </div>
 
-      <h1 id="authTitle" style="font-size: 22px; font-weight: 800; color: #ffffff; margin-bottom: 6px; letter-spacing: -0.5px;">Lecturer Portal Sign In</h1>
-      <p id="authSubtitle" style="color: #94a3b8; font-size: 13px; margin-bottom: 22px; line-height: 1.45;">
+      <h1 id="authTitle" style="font-size: 22px; font-weight: 800; color: var(--text-main); margin-bottom: 6px; letter-spacing: -0.5px;">Lecturer Portal Sign In</h1>
+      <p id="authSubtitle" style="color: var(--text-secondary); font-size: 13px; margin-bottom: 22px; line-height: 1.45;">
         Cryptographic JWT session authentication for institutional roll call & report exports.
       </p>
 
-      <div id="authErrorBox" style="display: none; padding: 12px 16px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 10px; color: #f87171; font-size: 13px; font-weight: 600; margin-bottom: 18px;"></div>
+      <div id="authErrorBox" style="display: none; padding: 12px 16px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 10px; color: #e11d48; font-size: 13px; font-weight: 600; margin-bottom: 18px;"></div>
 
       <form id="authForm">
         <div class="form-group" id="authNameGroup" style="display: none;">
@@ -75,13 +75,13 @@
         </button>
 
         <div style="text-align: center;">
-          <button type="button" id="toggleAuthModeBtn" style="background: none; border: none; color: #38bdf8; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: underline;">
+          <button type="button" id="toggleAuthModeBtn" style="background: none; border: none; color: var(--accent-cyan); font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: underline;">
             Don't have an account? Sign Up
           </button>
         </div>
       </form>
 
-      <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: center; gap: 8px; color: #64748b; font-size: 11px; font-weight: 600;">
+      <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); font-size: 11px; font-weight: 600;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         <span>Secured with RS256/HS256 JSON Web Tokens (JWT)</span>
       </div>
@@ -280,40 +280,92 @@
                 <h1 id="attCourseCodeTitle" style="font-size: 24px;">Course Roll Call</h1>
               </div>
               <div class="hero-actions">
+                <button class="btn btn-secondary" onclick="window.app.openQuickUploadModal()">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <span>Upload Class List</span>
+                </button>
                 <button class="btn btn-emerald" onclick="window.app.openProjectorMode(window.app.activeCourseId)">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                   <span>Projector QR Mode</span>
                 </button>
                 <button class="btn btn-primary" onclick="window.app.saveCurrentAttendance()">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                  <span>Save & Sync Attendance</span>
+                  <span>Save Attendance</span>
                 </button>
               </div>
             </div>
 
             <!-- Session Metadata Strip -->
-            <div style="background: var(--bg-glass-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px;">
+            <div style="background: #ffffff; border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; box-shadow: var(--shadow-sm);">
               <div>
-                <label style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Class Lecture #</label>
-                <input type="number" id="attClassNumberInput" class="form-control" style="padding: 8px 12px; margin-top: 4px;" value="1">
+                <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Class Lecture #</label>
+                <input type="number" id="attClassNumberInput" class="form-control" style="padding: 8px 12px; margin-top: 4px;" value="1" onchange="window.app.updateClassSessionDetails()">
               </div>
               <div>
-                <label style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Session Date</label>
+                <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Session Date</label>
                 <input type="date" id="attDateInput" class="form-control" style="padding: 8px 12px; margin-top: 4px;">
               </div>
               <div style="grid-column: span 2;">
-                <label style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Lecture Topic / Subject</label>
+                <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Lecture Topic / Subject</label>
                 <input type="text" id="attTopicInput" class="form-control" style="padding: 8px 12px; margin-top: 4px;" placeholder="e.g. Relational Data Modeling & Normalization">
               </div>
             </div>
 
+            <!-- Interactive Class Session QR & Share Portal -->
+            <div class="class-session-share-card">
+              <!-- Left: QR code thumbnail & label -->
+              <div class="session-qr-box">
+                <div id="sessionInlineQrCode"></div>
+                <div class="session-qr-label">Scan to Mark Present</div>
+              </div>
+
+              <!-- Right: Live details, copyable link, download, and anti-proxy toggle -->
+              <div class="session-share-details">
+                <div class="session-badge-row">
+                  <span class="session-live-badge" id="sessionActiveStatusBadge">
+                    <span class="jwt-pulse"></span>
+                    <span id="sessionStatusText">Accepting Check-Ins</span>
+                  </span>
+                  <span class="session-number-badge" id="sessionNumBadge">Lecture #1</span>
+                  <span class="anti-proxy-pill">🛡️ Anti-Proxy: 1 Student Per Phone</span>
+                </div>
+
+                <div>
+                  <div class="session-link-label" style="margin-bottom: 6px;">Shareable Link for this Specific Class:</div>
+                  <div class="link-input-wrapper">
+                    <input type="text" id="sessionClassLinkInput" class="form-control" readonly onclick="this.select()">
+                    <button class="btn btn-primary" style="padding: 10px 18px;" onclick="window.app.copyClassSessionLink()">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <span id="copyLinkBtnText">Copy Class Link</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="session-actions-row">
+                  <button class="btn btn-emerald" style="padding: 8px 14px; font-size: 12.5px;" onclick="window.app.openProjectorMode(window.app.activeCourseId)">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    <span>Projector Fullscreen</span>
+                  </button>
+
+                  <button class="btn btn-secondary" style="padding: 8px 14px; font-size: 12.5px;" onclick="window.app.downloadQrCodeImage()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>Download QR Image</span>
+                  </button>
+
+                  <button class="btn btn-danger" id="toggleSessionLockBtn" style="padding: 8px 14px; font-size: 12.5px;" onclick="window.app.toggleSessionCheckinsOpen()">
+                    <span id="sessionLockBtnText">🔒 Close Check-Ins Now</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <!-- Live Statistics Counter Bar -->
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <div style="background: #ffffff; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: var(--shadow-sm);">
               <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <span id="statPresentCount" style="padding: 4px 12px; border-radius: 9999px; background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 800; font-size: 12.5px;">0 Present</span>
-                <span id="statAbsentCount" style="padding: 4px 12px; border-radius: 9999px; background: rgba(239, 68, 68, 0.15); color: #f87171; font-weight: 800; font-size: 12.5px;">0 Absent</span>
-                <span id="statTotalEnrolled" style="color: #94a3b8; font-size: 12.5px; font-weight: 600;">0 Total</span>
-                <span id="statAttendancePct" style="color: #38bdf8; font-size: 12.5px; font-weight: 700;">0% Rate</span>
+                <span id="statPresentCount" style="padding: 4px 12px; border-radius: 9999px; background: #ecfdf5; border: 1px solid #a7f3d0; color: #059669; font-weight: 800; font-size: 12.5px;">0 Present</span>
+                <span id="statAbsentCount" style="padding: 4px 12px; border-radius: 9999px; background: #fff1f2; border: 1px solid #fecdd3; color: #e11d48; font-weight: 800; font-size: 12.5px;">0 Absent</span>
+                <span id="statTotalEnrolled" style="color: var(--text-secondary); font-size: 12.5px; font-weight: 600;">0 Total</span>
+                <span id="statAttendancePct" style="color: var(--accent-cyan); font-size: 12.5px; font-weight: 700;">0% Rate</span>
               </div>
 
               <div style="display: flex; gap: 8px;">
@@ -366,15 +418,15 @@
                 <div class="dropzone-icon">
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 </div>
-                <h3 style="font-size: 16px; font-weight: 800; color: #ffffff; margin-bottom: 6px;">Drop your Class List here, or Browse</h3>
-                <p style="font-size: 13px; color: #94a3b8;">Supports Microsoft Excel (.xlsx, .xls), CSV, or plain text rosters</p>
+                <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">Drop your Class List here, or Browse</h3>
+                <p style="font-size: 13px; color: var(--text-secondary);">Supports Microsoft Excel (.xlsx, .xls), CSV, or plain text rosters</p>
               </div>
 
               <div id="importStatusMessage" style="margin-top: 18px; font-size: 13.5px; text-align: center;"></div>
 
               <!-- Parsed Preview Table -->
               <div id="importPreviewSection" style="display: none; margin-top: 24px;">
-                <h4 style="font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 12px;">Spreadsheet Preview (Extracted Records)</h4>
+                <h4 style="font-size: 15px; font-weight: 800; color: var(--text-main); margin-bottom: 12px;">Spreadsheet Preview (Extracted Records)</h4>
                 <div class="attendance-table-wrap" style="max-height: 340px; overflow-y: auto;">
                   <table class="attendance-table">
                     <thead>
@@ -408,13 +460,13 @@
               </div>
             </div>
 
-            <div style="background: var(--bg-glass-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 36px 24px; max-width: 700px; margin: 0 auto; text-align: center;">
-              <div style="width: 64px; height: 64px; background: rgba(56, 189, 248, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; color: #38bdf8;">
+            <div style="background: #ffffff; border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 36px 24px; max-width: 700px; margin: 0 auto; text-align: center; box-shadow: var(--shadow-sm);">
+              <div style="width: 64px; height: 64px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; color: #0284c7;">
                 <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
               </div>
 
-              <h3 style="font-size: 19px; font-weight: 800; color: #ffffff; margin-bottom: 8px;">Institutional Attendance Matrix</h3>
-              <p style="color: #94a3b8; font-size: 13.5px; margin-bottom: 22px; max-width: 480px; margin-left: auto; margin-right: auto;">
+              <h3 style="font-size: 19px; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">Institutional Attendance Matrix</h3>
+              <p style="color: var(--text-secondary); font-size: 13.5px; margin-bottom: 22px; max-width: 480px; margin-left: auto; margin-right: auto;">
                 Produces high-resolution, print-ready PDF reports with full lecture checkmark breakdown, percentage stats, and external examination sign-off rows.
               </p>
 
@@ -498,11 +550,11 @@
     </button>
 
     <div style="text-align: center; max-width: 580px; width: 100%;">
-      <span style="display: inline-block; padding: 6px 14px; background: rgba(56, 189, 248, 0.2); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 9999px; color: #38bdf8; font-weight: 800; font-size: 12.5px; margin-bottom: 12px; letter-spacing: 1px;">
+      <span style="display: inline-block; padding: 6px 14px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 9999px; color: #0284c7; font-weight: 800; font-size: 12.5px; margin-bottom: 12px; letter-spacing: 1px;">
         CLASSROOM LIVE ATTENDANCE CHECK-IN
       </span>
-      <h2 id="projectorCourseCode" style="font-size: 26px; font-weight: 800; color: #ffffff; margin-bottom: 6px;">Course Code</h2>
-      <p style="color: #94a3b8; font-size: 14.5px; margin-bottom: 22px;">Students: Open camera on your smartphone & point at the QR code below</p>
+      <h2 id="projectorCourseCode" style="font-size: 26px; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">Course Code</h2>
+      <p style="color: var(--text-secondary); font-size: 14.5px; margin-bottom: 22px;">Students: Open camera on your smartphone & point at the QR code below</p>
 
       <!-- QR Code Display Box -->
       <div class="projector-qr-card" style="display: inline-block;">
@@ -510,8 +562,8 @@
       </div>
 
       <!-- Direct Link Pill -->
-      <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 12px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-        <span id="projectorCheckinLinkText" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #38bdf8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+      <div style="background: #ffffff; border: 1px solid var(--border-subtle); border-radius: 14px; padding: 12px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: var(--shadow-sm);">
+        <span id="projectorCheckinLinkText" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #0284c7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
         <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="window.app.copyProjectorLink()">Copy Link</button>
       </div>
 
@@ -533,21 +585,58 @@
         <button class="modal-close-btn modal-close-trigger">&times;</button>
       </div>
       <div class="modal-body">
-        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 16px;">
-          This session is authenticated with signed JSON Web Tokens (JWT). All database requests attach this token via the <code style="color: #38bdf8;">Authorization: Bearer</code> header.
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+          This session is authenticated with signed JSON Web Tokens (JWT). All database requests attach this token via the <code style="color: #0284c7; font-weight: 700;">Authorization: Bearer</code> header.
         </p>
 
         <div class="form-group">
           <label>Raw Encoded JWT (Header.Payload.Signature)</label>
-          <div id="jwtRawToken" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #38bdf8; background: #070d18; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; word-break: break-all; max-height: 95px; overflow-y: auto;"></div>
+          <div id="jwtRawToken" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #0284c7; background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px; word-break: break-all; max-height: 95px; overflow-y: auto;"></div>
         </div>
 
         <div class="form-group">
           <label>Decoded Claims (Payload JSON)</label>
-          <pre id="jwtDecodedClaims" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #34d399; background: #070d18; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; max-height: 170px; overflow-y: auto;"></pre>
+          <pre id="jwtDecodedClaims" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #059669; background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px; max-height: 170px; overflow-y: auto;"></pre>
         </div>
 
-        <div id="jwtExpiryDisplay" style="font-size: 12.5px; font-weight: 700; color: #fbbf24; text-align: right;"></div>
+        <div id="jwtExpiryDisplay" style="font-size: 12.5px; font-weight: 700; color: #d97706; text-align: right;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 4: QUICK CLASS LIST DOCUMENT UPLOADER
+       ======================================================================== -->
+  <div id="quickUploadModal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <h3 id="quickUploadModalTitle">Upload Class List Document</h3>
+        </div>
+        <button class="modal-close-btn modal-close-trigger">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 18px;">
+          Select or drag your institutional nominal roll document. We automatically detect student names and matriculation numbers from Excel (.xlsx, .xls) and CSV sheets.
+        </p>
+
+        <div class="dropzone" id="quickDropzone">
+          <input type="file" id="quickClassFileInput" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display: none;">
+          <div class="dropzone-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">Click or Drag Document Here</h3>
+          <p style="font-size: 13px; color: var(--text-secondary);">Supports Microsoft Excel (.xlsx, .xls), CSV, or plain text rosters</p>
+        </div>
+
+        <div id="quickUploadStatus" style="margin-top: 14px; font-size: 13px; text-align: center; font-weight: 700;"></div>
+
+        <div id="quickUploadPreviewWrap" style="display: none; margin-top: 18px;">
+          <button id="quickUploadConfirmBtn" class="btn btn-emerald" style="width: 100%; padding: 13px; font-size: 14.5px;">
+            Confirm & Enroll Students Now
+          </button>
+        </div>
       </div>
     </div>
   </div>

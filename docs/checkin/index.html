@@ -9,17 +9,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #070d18;
-      --card-bg: rgba(18, 26, 43, 0.88);
-      --border: rgba(255, 255, 255, 0.1);
-      --accent: #38bdf8;
-      --accent-glow: rgba(56, 189, 248, 0.25);
-      --success: #10b981;
-      --success-glow: rgba(16, 185, 129, 0.22);
-      --error: #ef4444;
-      --warning: #f59e0b;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --accent: #0284c7;
+      --accent-glow: rgba(2, 132, 199, 0.15);
+      --success: #059669;
+      --success-glow: rgba(5, 150, 105, 0.12);
+      --error: #e11d48;
+      --warning: #d97706;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
     }
 
     * {
@@ -41,42 +41,19 @@
       padding: 20px 16px 40px;
       position: relative;
       overflow-x: hidden;
-    }
-
-    /* Ambient glow circles */
-    body::before, body::after {
-      content: '';
-      position: absolute;
-      width: 340px;
-      height: 340px;
-      border-radius: 50%;
-      filter: blur(120px);
-      z-index: 0;
-      pointer-events: none;
-    }
-    body::before {
-      background: radial-gradient(circle, #2563eb, transparent 70%);
-      top: -80px;
-      left: -80px;
-      opacity: 0.28;
-    }
-    body::after {
-      background: radial-gradient(circle, #38bdf8, transparent 70%);
-      bottom: -80px;
-      right: -80px;
-      opacity: 0.2;
+      background-image: 
+        radial-gradient(circle at 10% 15%, rgba(2, 132, 199, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(5, 150, 105, 0.05) 0%, transparent 45%);
     }
 
     .container {
       width: 100%;
       max-width: 480px;
       background: var(--card-bg);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
       border: 1px solid var(--border);
       border-radius: 28px;
       padding: 24px 20px;
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      box-shadow: 0 12px 36px -6px rgba(15, 23, 42, 0.08);
       position: relative;
       z-index: 1;
     }
@@ -87,8 +64,8 @@
       gap: 6px;
       padding: 4px 12px;
       border-radius: 100px;
-      background: rgba(56, 189, 248, 0.15);
-      border: 1px solid rgba(56, 189, 248, 0.3);
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
       color: var(--accent);
       font-size: 11px;
       font-weight: 700;
@@ -116,7 +93,7 @@
       font-weight: 800;
       line-height: 1.25;
       letter-spacing: -0.3px;
-      color: #ffffff;
+      color: var(--text-main);
       margin-bottom: 4px;
     }
 
@@ -127,8 +104,8 @@
     }
 
     .session-info-card {
-      background: rgba(15, 23, 42, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: #f8fafc;
+      border: 1px solid var(--border);
       border-radius: 16px;
       padding: 12px 16px;
       margin-bottom: 18px;
@@ -154,14 +131,14 @@
     .info-val {
       font-size: 13.5px;
       font-weight: 700;
-      color: #ffffff;
+      color: var(--text-main);
     }
 
     /* Tab Switcher */
     .tab-nav {
       display: flex;
-      background: rgba(15, 23, 42, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: #f1f5f9;
+      border: 1px solid var(--border);
       border-radius: 14px;
       padding: 4px;
       margin-bottom: 18px;
@@ -187,10 +164,10 @@
     }
 
     .tab-btn.active {
-      background: rgba(56, 189, 248, 0.16);
-      color: #ffffff;
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      background: #ffffff;
+      color: var(--accent);
+      border: 1px solid #bae6fd;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
 
     /* Anti-Proxy Guard Box */
@@ -198,8 +175,8 @@
       display: flex;
       align-items: flex-start;
       gap: 10px;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.25);
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
       border-radius: 14px;
       padding: 10px 12px;
       margin-bottom: 16px;
@@ -207,13 +184,13 @@
 
     .anti-proxy-banner svg {
       flex-shrink: 0;
-      color: #f87171;
+      color: var(--error);
       margin-top: 1px;
     }
 
     .anti-proxy-text {
       font-size: 11px;
-      color: #fca5a5;
+      color: #be123c;
       line-height: 1.45;
     }
 
@@ -226,10 +203,10 @@
     .search-input {
       width: 100%;
       height: 46px;
-      background: rgba(15, 23, 42, 0.8);
-      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
       border-radius: 14px;
-      color: #ffffff;
+      color: var(--text-main);
       padding: 0 16px 0 42px;
       font-size: 14px;
       font-family: inherit;
@@ -257,8 +234,8 @@
       max-height: 380px;
       overflow-y: auto;
       border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(10, 16, 28, 0.6);
+      border: 1px solid var(--border);
+      background: #ffffff;
       padding: 6px;
       margin-bottom: 16px;
     }
@@ -267,7 +244,7 @@
       width: 5px;
     }
     .roster-list::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.1);
       border-radius: 10px;
     }
 
@@ -278,8 +255,8 @@
       padding: 12px 14px;
       border-radius: 12px;
       margin-bottom: 4px;
-      background: rgba(18, 26, 43, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: #f8fafc;
+      border: 1px solid var(--border);
       transition: all 0.2s ease;
       cursor: pointer;
     }
@@ -289,16 +266,16 @@
     }
 
     .student-item:hover:not(.signed) {
-      background: rgba(56, 189, 248, 0.12);
-      border-color: rgba(56, 189, 248, 0.3);
+      background: #f0f9ff;
+      border-color: #bae6fd;
       transform: translateX(2px);
     }
 
     .student-item.signed {
-      background: rgba(16, 185, 129, 0.08);
-      border-color: rgba(16, 185, 129, 0.25);
+      background: #ecfdf5;
+      border-color: #a7f3d0;
       cursor: not-allowed;
-      opacity: 0.85;
+      opacity: 0.9;
     }
 
     .student-info {
@@ -310,7 +287,7 @@
     .student-name {
       font-size: 13.5px;
       font-weight: 700;
-      color: #ffffff;
+      color: var(--text-main);
     }
 
     .student-matric {
@@ -329,7 +306,7 @@
       width: 24px;
       height: 24px;
       border-radius: 7px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      border: 2px solid #cbd5e1;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -338,7 +315,7 @@
 
     .student-item:hover .tick-box {
       border-color: var(--accent);
-      background: var(--accent-glow);
+      background: #e0f2fe;
     }
 
     .student-item.signed .tick-box {
@@ -353,19 +330,20 @@
       gap: 4px;
       padding: 3px 8px;
       border-radius: 6px;
-      background: rgba(16, 185, 129, 0.18);
-      color: #34d399;
+      background: #ecfdf5;
+      color: #059669;
       font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      border: 1px solid #a7f3d0;
     }
 
     /* Verification Modal (Claim Sheet) */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.75);
+      background: rgba(15, 23, 42, 0.45);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       z-index: 100;
@@ -378,11 +356,11 @@
     .modal-card {
       width: 100%;
       max-width: 420px;
-      background: #111a2e;
-      border: 1px solid rgba(56, 189, 248, 0.3);
+      background: #ffffff;
+      border: 1px solid var(--border);
       border-radius: 24px;
       padding: 24px 20px;
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.15);
       animation: zoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
@@ -394,7 +372,7 @@
     .modal-title {
       font-size: 17px;
       font-weight: 800;
-      color: #ffffff;
+      color: var(--text-main);
       margin-bottom: 4px;
     }
 
@@ -405,8 +383,8 @@
     }
 
     .target-student-badge {
-      background: rgba(56, 189, 248, 0.12);
-      border: 1px solid rgba(56, 189, 248, 0.3);
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
       border-radius: 12px;
       padding: 10px 14px;
       margin-bottom: 16px;
@@ -415,7 +393,7 @@
     .target-student-name {
       font-size: 14px;
       font-weight: 800;
-      color: #ffffff;
+      color: var(--text-main);
     }
 
     .target-student-matric {
@@ -432,17 +410,17 @@
       display: block;
       font-size: 11.5px;
       font-weight: 700;
-      color: #e2e8f0;
+      color: var(--text-secondary);
       margin-bottom: 6px;
     }
 
     input[type="text"], input[type="tel"] {
       width: 100%;
       height: 48px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
       border-radius: 12px;
-      color: #ffffff;
+      color: var(--text-main);
       padding: 0 14px;
       font-size: 14px;
       font-family: inherit;
@@ -466,7 +444,7 @@
     .btn-submit {
       width: 100%;
       height: 48px;
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      background: linear-gradient(135deg, #0284c7, #0369a1);
       border: none;
       border-radius: 14px;
       color: #ffffff;
@@ -478,14 +456,14 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25);
       margin-top: 14px;
       transition: all 0.2s;
     }
 
     .btn-submit:hover:not(:disabled) {
       transform: translateY(-1px);
-      box-shadow: 0 10px 24px rgba(37, 99, 235, 0.5);
+      box-shadow: 0 6px 18px rgba(2, 132, 199, 0.35);
     }
 
     .btn-cancel {
@@ -503,9 +481,9 @@
 
     /* Error alert */
     .error-msg {
-      background: rgba(239, 68, 68, 0.16);
-      border: 1px solid rgba(239, 68, 68, 0.4);
-      color: #fca5a5;
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
+      color: #e11d48;
       padding: 10px 12px;
       border-radius: 12px;
       font-size: 12px;
@@ -540,8 +518,8 @@
     }
 
     .receipt-box {
-      background: rgba(15, 23, 42, 0.7);
-      border: 1px dashed rgba(255, 255, 255, 0.18);
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
       border-radius: 16px;
       padding: 16px;
       text-align: left;
@@ -553,7 +531,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 6px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      border-bottom: 1px solid var(--border);
       font-size: 12.5px;
     }
     .receipt-row:last-child {
@@ -563,7 +541,7 @@
     .receipt-label { color: var(--text-muted); }
     .receipt-val {
       font-weight: 700;
-      color: #ffffff;
+      color: var(--text-main);
       font-family: 'JetBrains Mono', monospace;
     }
 
@@ -674,6 +652,7 @@
               style="text-transform: uppercase; font-family: 'JetBrains Mono', monospace;"
               required
             >
+          </div>
           <button type="submit" class="btn-submit" id="directSubmitBtn">
             <span>Verify & Mark Present</span>
           </button>
@@ -689,7 +668,7 @@
         </svg>
       </div>
 
-      <h2 style="font-size: 21px; font-weight: 800; color: #ffffff; margin-bottom: 4px;">Attendance Confirmed!</h2>
+      <h2 style="font-size: 21px; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">Attendance Confirmed!</h2>
       <p style="font-size: 13px; color: var(--text-muted);">You have been marked present on the lecturer's terminal.</p>
 
       <div class="receipt-box">
@@ -803,6 +782,16 @@
 
     // Load initial student roster
     async function loadRoster() {
+      // 0. Check if lecturer closed check-ins for this session
+      const isSessionClosed = localStorage.getItem('session_open_' + sessionId) === 'false';
+      if (isSessionClosed) {
+        showGeneralError("🔴 This attendance session has been closed by the lecturer. Submissions are no longer accepted.");
+        const rosterSec = document.getElementById('rosterSection');
+        if (rosterSec) { rosterSec.style.pointerEvents = 'none'; rosterSec.style.opacity = '0.6'; }
+        const directSec = document.getElementById('directSection');
+        if (directSec) { directSec.style.pointerEvents = 'none'; directSec.style.opacity = '0.6'; }
+      }
+
       // 1. Check if device already signed
       if (registeredDeviceSubmission) {
         try {
@@ -828,7 +817,24 @@
         console.warn("Could not load from Supabase:", err);
       }
 
-      // If no students found from Supabase (or demo mode), create demo roster
+      // If no students from Supabase, check local enrolled roster for this course
+      if (!allStudents || allStudents.length === 0) {
+        const local = localStorage.getItem('lecturer_app_students_' + courseId);
+        if (local) {
+          try {
+            const parsed = JSON.parse(local);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              allStudents = parsed.map(s => ({
+                id: s.id,
+                name: s.name,
+                matric_number: s.matricNumber || s.matric_number
+              }));
+            }
+          } catch (e) {}
+        }
+      }
+
+      // Fallback demo roster if completely unseeded
       if (!allStudents || allStudents.length === 0) {
         allStudents = [
           { id: '1', name: 'ADEBAYO, Kehinde', matric_number: '2021/1/10001' },
@@ -841,7 +847,14 @@
         ];
       }
 
-      // 3. Fetch signed records for session
+      // Check locally signed students for this class
+      for (const s of allStudents) {
+        if (localStorage.getItem(`att_signed_student_${courseId}_${classNum}_${s.id}`) === 'true') {
+          signedStudentIds.add(s.id);
+        }
+      }
+
+      // 3. Fetch signed records for session from Supabase
       if (sessionId) {
         try {
           const recRes = await fetch(`${SUPABASE_URL}/rest/v1/attendance_records?attendance_session_id=eq.${encodeURIComponent(sessionId)}&select=student_id`, {
@@ -902,9 +915,21 @@
 
     // Open identity verification modal for a specific student
     function openVerificationModal(studentId) {
+      // 0. Check if lecturer closed check-ins
+      if (localStorage.getItem('session_open_' + sessionId) === 'false') {
+        showGeneralError("🔴 Check-ins have been closed by the lecturer for this session.");
+        return;
+      }
+
       // 1. Anti-Proxy Rule 1: Check if this physical phone already signed for ANY student
       if (localStorage.getItem(deviceStorageKey)) {
         showGeneralError("🚫 Anti-Proxy Protection: This phone has already submitted attendance for another student. Only ONE student can sign per phone.");
+        return;
+      }
+
+      // 2. Anti-Proxy Rule 2: Check if this student is already marked present
+      if (signedStudentIds.has(studentId)) {
+        showGeneralError("✓ This student is already signed present for this session.");
         return;
       }
 
@@ -917,6 +942,7 @@
       document.getElementById('modalErrorBox').style.display = 'none';
 
       document.getElementById('verificationModal').style.display = 'flex';
+      setTimeout(() => document.getElementById('modalMatricConfirm')?.focus(), 150);
     }
 
     function closeVerificationModal() {
@@ -928,12 +954,19 @@
       e.preventDefault();
       if (!selectedStudent) return;
 
+      // Check session status
+      if (localStorage.getItem('session_open_' + sessionId) === 'false') {
+        showGeneralError("🔴 Check-ins have been closed by the lecturer for this session.");
+        closeVerificationModal();
+        return;
+      }
+
       const matricConfirm = document.getElementById('modalMatricConfirm').value.trim().toUpperCase();
       const errBox = document.getElementById('modalErrorBox');
 
       // 1. Verify Matric Number matches selected student
       if (selectedStudent.matric_number && matricConfirm !== selectedStudent.matric_number.toUpperCase()) {
-        errBox.innerText = `Matriculation number does not match ${selectedStudent.name}. You cannot claim someone else's name!`;
+        errBox.innerText = `Matriculation number does not match ${selectedStudent.name}. You cannot mark attendance for a friend!`;
         errBox.style.display = 'block';
         return;
       }
@@ -954,6 +987,12 @@
 
     async function handleDirectSubmit(e) {
       e.preventDefault();
+
+      if (localStorage.getItem('session_open_' + sessionId) === 'false') {
+        showGeneralError("🔴 Check-ins have been closed by the lecturer for this session.");
+        return;
+      }
+
       const matric = document.getElementById('directMatric').value.trim().toUpperCase();
 
       if (localStorage.getItem(deviceStorageKey)) {
@@ -963,6 +1002,11 @@
 
       // Find in roster
       const match = allStudents.find(s => s.matric_number && s.matric_number.toUpperCase() === matric);
+      if (match && signedStudentIds.has(match.id)) {
+        showGeneralError(`✓ ${match.name} is already signed present for this lecture session.`);
+        return;
+      }
+
       const studentName = match ? match.name : matric;
       const studentId = match ? match.id : crypto.randomUUID();
 
@@ -973,32 +1017,10 @@
       const receiptHash = '#VER-' + Math.random().toString(36).substring(2, 8).toUpperCase();
       const recordTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      // Record to Supabase
-      if (sessionId) {
-        try {
-          await fetch(`${SUPABASE_URL}/rest/v1/attendance_records`, {
-            method: 'POST',
-            headers: {
-              'apikey': SUPABASE_KEY,
-              'Authorization': `Bearer ${SUPABASE_KEY}`,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify({
-              id: crypto.randomUUID(),
-              attendance_session_id: sessionId,
-              student_id: studentId,
-              status: 'present',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            })
-          });
-        } catch (err) {
-          console.warn("Supabase record write note:", err);
-        }
-      }
+      // Lock this student locally for this class
+      localStorage.setItem(`att_signed_student_${courseId}_${classNum}_${studentId}`, 'true');
 
-      // 4. Lock this physical device permanently for this session
+      // Lock this physical device permanently for this session
       const lockPayload = {
         name: name,
         matric: matric,
@@ -1011,6 +1033,27 @@
       signedStudentIds.add(studentId);
       closeVerificationModal();
       showSuccessView(name, matric, recordTime, receiptHash);
+
+      // Record to Supabase asynchronously
+      if (sessionId) {
+        fetch(`${SUPABASE_URL}/rest/v1/attendance_records`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            id: crypto.randomUUID(),
+            attendance_session_id: sessionId,
+            student_id: studentId,
+            status: 'present',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+        }).catch(err => console.warn("Supabase record write note:", err));
+      }
     }
 
     function showGeneralError(msg) {
@@ -1021,6 +1064,7 @@
     }
 
     function showSuccessView(name, matric, time, hash) {
+      window.scrollTo(0, 0);
       document.getElementById('mainContentView').style.display = 'none';
       document.getElementById('successView').style.display = 'block';
 
