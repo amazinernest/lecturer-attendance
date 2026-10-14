@@ -143,8 +143,7 @@ void main() {
         classNumber: 2,
         topic: 'Agile Architecture & System Design',
         date: DateTime(2026, 10, 14),
-        qrData: 'https://amazinernest.github.io/lecturer-attendance/checkin?pin=9821',
-        pinCode: '9821',
+        qrData: 'https://amazinernest.github.io/lecturer-attendance/checkin',
         totalStudents: 45,
       );
 

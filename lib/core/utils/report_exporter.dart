@@ -774,7 +774,7 @@ class ReportExporter {
     required String topic,
     required DateTime date,
     required String qrData,
-    required String pinCode,
+    String? pinCode,
     required int totalStudents,
   }) async {
     final pdf = pw.Document();
@@ -912,27 +912,31 @@ class ReportExporter {
                           ),
                           pw.SizedBox(height: 6),
                           _pdfInstructionRow('1', 'Scan QR code with your smartphone camera or browser.'),
-                          _pdfInstructionRow('2', 'Enter your verified Student Matriculation Number.'),
-                          _pdfInstructionRow('3', 'Enter the 4-Digit Security Session PIN:'),
-                          pw.SizedBox(height: 6),
-                          pw.Container(
-                            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                            decoration: pw.BoxDecoration(
-                              color: PdfColors.amber100,
-                              borderRadius: pw.BorderRadius.circular(6),
-                              border: pw.Border.all(color: PdfColors.amber700, width: 1.2),
+                          _pdfInstructionRow('2', 'Select your name or enter your Student Matriculation Number.'),
+                          if (pinCode != null && pinCode.isNotEmpty) ...[
+                            _pdfInstructionRow('3', 'Enter the 4-Digit Security Session PIN:'),
+                            pw.SizedBox(height: 6),
+                            pw.Container(
+                              padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                              decoration: pw.BoxDecoration(
+                                color: PdfColors.amber100,
+                                borderRadius: pw.BorderRadius.circular(6),
+                                border: pw.Border.all(color: PdfColors.amber700, width: 1.2),
+                              ),
+                              child: pw.Row(
+                                mainAxisSize: pw.MainAxisSize.min,
+                                children: [
+                                  pw.Text('SECURITY PIN:  ', style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: PdfColors.grey800)),
+                                  pw.Text(
+                                    pinCode,
+                                    style: pw.TextStyle(fontSize: 15, fontWeight: pw.FontWeight.bold, color: PdfColors.amber900, letterSpacing: 2),
+                                  ),
+                                ],
+                              ),
                             ),
-                            child: pw.Row(
-                              mainAxisSize: pw.MainAxisSize.min,
-                              children: [
-                                pw.Text('SECURITY PIN:  ', style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: PdfColors.grey800)),
-                                pw.Text(
-                                  pinCode,
-                                  style: pw.TextStyle(fontSize: 15, fontWeight: pw.FontWeight.bold, color: PdfColors.amber900, letterSpacing: 2),
-                                ),
-                              ],
-                            ),
-                          ),
+                          ] else ...[
+                            _pdfInstructionRow('3', 'Tap Confirm to record attendance instantly.'),
+                          ],
                         ],
                       ),
                     ),

@@ -674,18 +674,6 @@
               style="text-transform: uppercase; font-family: 'JetBrains Mono', monospace;"
               required
             >
-          </div>
-          <div class="form-group">
-            <label for="directPin">4-Digit Security Session PIN</label>
-            <input 
-              type="tel" 
-              id="directPin" 
-              class="pin-input" 
-              placeholder="••••" 
-              maxlength="4" 
-              required
-            >
-          </div>
           <button type="submit" class="btn-submit" id="directSubmitBtn">
             <span>Verify & Mark Present</span>
           </button>
@@ -758,19 +746,6 @@
             id="modalMatricConfirm" 
             placeholder="Enter your matric to confirm" 
             style="text-transform: uppercase; font-family: 'JetBrains Mono', monospace;"
-            required
-            autocomplete="off"
-          >
-        </div>
-
-        <div class="form-group">
-          <label for="modalPinConfirm">4-Digit Security Session PIN</label>
-          <input 
-            type="tel" 
-            id="modalPinConfirm" 
-            class="pin-input" 
-            placeholder="••••" 
-            maxlength="4" 
             required
             autocomplete="off"
           >
@@ -939,7 +914,6 @@
       document.getElementById('modalStudentName').innerText = selectedStudent.name;
       document.getElementById('modalStudentMatric').innerText = `Matric: ${selectedStudent.matric_number ? selectedStudent.matric_number.substring(0, 6) + '•••••' : 'Required'}`;
       document.getElementById('modalMatricConfirm').value = '';
-      document.getElementById('modalPinConfirm').value = '';
       document.getElementById('modalErrorBox').style.display = 'none';
 
       document.getElementById('verificationModal').style.display = 'flex';
@@ -955,7 +929,6 @@
       if (!selectedStudent) return;
 
       const matricConfirm = document.getElementById('modalMatricConfirm').value.trim().toUpperCase();
-      const pinConfirm = document.getElementById('modalPinConfirm').value.trim();
       const errBox = document.getElementById('modalErrorBox');
 
       // 1. Verify Matric Number matches selected student
@@ -965,14 +938,7 @@
         return;
       }
 
-      // 2. Verify Session Security PIN
-      if (expectedPin && pinConfirm !== expectedPin) {
-        errBox.innerText = "Invalid 4-digit Security PIN! Check the PIN projected on the lecturer's screen.";
-        errBox.style.display = 'block';
-        return;
-      }
-
-      // 3. Final Device Lock check
+      // 2. Device Lock check (Anti-Proxy)
       if (localStorage.getItem(deviceStorageKey)) {
         errBox.innerText = "Anti-Proxy Alert: This device has already been used to record attendance.";
         errBox.style.display = 'block';
@@ -989,12 +955,6 @@
     async function handleDirectSubmit(e) {
       e.preventDefault();
       const matric = document.getElementById('directMatric').value.trim().toUpperCase();
-      const pin = document.getElementById('directPin').value.trim();
-
-      if (expectedPin && pin !== expectedPin) {
-        showGeneralError("Invalid Security PIN! Please check the PIN projected on the lecturer's screen.");
-        return;
-      }
 
       if (localStorage.getItem(deviceStorageKey)) {
         showGeneralError("Anti-Proxy Alert: This phone has already submitted attendance for this class.");

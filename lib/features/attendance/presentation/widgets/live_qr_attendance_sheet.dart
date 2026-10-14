@@ -37,7 +37,6 @@ class LiveQrAttendanceSheet extends StatefulWidget {
 
 class _LiveQrAttendanceSheetState extends State<LiveQrAttendanceSheet> {
   late Map<String, AttendanceStatus> _statusMap;
-  late String _securityPin;
   bool _isSessionOpen = true;
   bool _isGeneratingPdf = false;
   final List<Student> _recentCheckIns = [];
@@ -47,32 +46,12 @@ class _LiveQrAttendanceSheetState extends State<LiveQrAttendanceSheet> {
   void initState() {
     super.initState();
     _statusMap = Map.from(widget.initialStatusMap);
-    _securityPin = _generateRandomPin();
   }
 
   @override
   void dispose() {
     _ticker?.cancel();
     super.dispose();
-  }
-
-  String _generateRandomPin() {
-    final rng = Random();
-    return (1000 + rng.nextInt(9000)).toString();
-  }
-
-  void _regeneratePin() {
-    HapticFeedback.mediumImpact();
-    setState(() {
-      _securityPin = _generateRandomPin();
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('New Security PIN generated: $_securityPin'),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 
   int get _presentCount =>
@@ -87,7 +66,6 @@ class _LiveQrAttendanceSheetState extends State<LiveQrAttendanceSheet> {
         '&courseCode=${Uri.encodeComponent(widget.course.courseCode)}'
         '&courseTitle=${Uri.encodeComponent(widget.course.courseTitle)}'
         '&classNum=${widget.classNumber}'
-        '&pin=$_securityPin'
         '&sessionId=${Uri.encodeComponent(widget.sessionId)}';
   }
 
@@ -131,7 +109,6 @@ class _LiveQrAttendanceSheetState extends State<LiveQrAttendanceSheet> {
     final message = '''
 *${widget.course.courseCode} - Class #${widget.classNumber} Attendance*
 Topic: ${widget.topic.isNotEmpty ? widget.topic : 'Regular Lecture'}
-Security PIN: $_securityPin
 
 Tick your name on the roster:
 $_portalUrl
@@ -148,7 +125,7 @@ Notice: Locked to 1 submission per physical phone. Proxy signing is prohibited.
             SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Class message with link & PIN copied! Paste into WhatsApp/LMS.',
+                'Class attendance link copied! Paste into WhatsApp/LMS.',
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
@@ -223,7 +200,6 @@ Notice: Locked to 1 submission per physical phone. Proxy signing is prohibited.
         topic: widget.topic,
         date: widget.sessionDate,
         qrData: _portalUrl,
-        pinCode: _securityPin,
         totalStudents: _totalCount,
       );
 
@@ -455,56 +431,33 @@ Notice: Locked to 1 submission per physical phone. Proxy signing is prohibited.
                     ),
                     child: Column(
                       children: [
-                        // Security PIN Callout
+                        // Instant Check-In Badge
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
+                            color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(100),
                             border: Border.all(
-                              color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                              color: const Color(0xFF10B981).withValues(alpha: 0.3),
                             ),
                           ),
-                          child: Row(
+                          child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
-                                Icons.shield_rounded,
-                                color: Color(0xFFD97706),
+                              Icon(
+                                Icons.bolt_rounded,
+                                color: Color(0xFF059669),
                                 size: 18,
                               ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'SESSION PIN: ',
+                              SizedBox(width: 6),
+                              Text(
+                                'Instant 1-Tap Check-In • No PIN Required',
                                 style: TextStyle(
                                   fontFamily: AppTypography.fontFamily,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                              Text(
-                                _securityPin,
-                                style: const TextStyle(
-                                  fontFamily: AppTypography.fontFamily,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 2,
-                                  color: Color(0xFFB45309),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              InkWell(
-                                onTap: _regeneratePin,
-                                borderRadius: BorderRadius.circular(6),
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  child: const Icon(
-                                    Icons.refresh_rounded,
-                                    size: 16,
-                                    color: Color(0xFFB45309),
-                                  ),
+                                  color: Color(0xFF047857),
                                 ),
                               ),
                             ],
