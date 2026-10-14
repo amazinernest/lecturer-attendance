@@ -746,8 +746,10 @@
 
   <script>
     // Supabase Configuration
-    const SUPABASE_URL = "https://loinljaeiqxknnfjaqfd.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_-E5fFgUO7vCf69oOJ5TUBg_74kmAKcT";
+    const customSupabaseUrl = localStorage.getItem('lecturer_custom_supabase_url');
+    const customSupabaseKey = localStorage.getItem('lecturer_custom_supabase_key');
+    const SUPABASE_URL = customSupabaseUrl || "https://loinljaeiqxknnfjaqfd.supabase.co";
+    const SUPABASE_KEY = customSupabaseKey || "sb_publishable_-E5fFgUO7vCf69oOJ5TUBg_74kmAKcT";
 
     // URL Parameters
     const urlParams = new URLSearchParams(window.location.search);

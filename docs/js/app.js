@@ -100,6 +100,35 @@ class App {
       this.toggleAuthMode();
     });
 
+    // Cloud Backend (Supabase) Settings Modal
+    document.getElementById('backendSettingsBtn')?.addEventListener('click', () => {
+      const config = AuthService.getSupabaseConfig();
+      const urlInput = document.getElementById('cfgSupabaseUrl');
+      const keyInput = document.getElementById('cfgSupabaseKey');
+      if (urlInput) urlInput.value = config.isCustom ? config.url : '';
+      if (keyInput) keyInput.value = config.isCustom ? config.key : '';
+      document.getElementById('backendModal')?.classList.add('active');
+    });
+
+    document.getElementById('saveBackendBtn')?.addEventListener('click', () => {
+      const url = document.getElementById('cfgSupabaseUrl')?.value.trim();
+      const key = document.getElementById('cfgSupabaseKey')?.value.trim();
+      if (!url || !key) {
+        alert('Please provide both the Supabase URL and the Anon Key.');
+        return;
+      }
+      AuthService.setCustomSupabaseConfig(url, key);
+      alert('Custom Supabase configuration saved! Reloading application...');
+      window.location.reload();
+    });
+
+    document.getElementById('resetBackendBtn')?.addEventListener('click', () => {
+      if (confirm('Reset to default backend configuration?')) {
+        AuthService.setCustomSupabaseConfig(null, null);
+        window.location.reload();
+      }
+    });
+
     // Create Course Form
     document.getElementById('createCourseForm')?.addEventListener('submit', async e => {
       e.preventDefault();
@@ -219,12 +248,16 @@ class App {
 
     errBox.style.display = 'none';
     submitBtn.disabled = true;
-    submitBtn.innerText = 'Verifying JWT...';
+    submitBtn.innerText = this.isSignUpMode ? 'Creating Account...' : 'Verifying JWT...';
 
     try {
       if (this.isSignUpMode) {
-        await AuthService.signUp(email, password, fullName || 'Dr. Lecturer');
-        alert('Account registered! If confirmation is enabled, please verify your email or use Quick Demo Access.');
+        const res = await AuthService.signUp(email, password, fullName || 'Dr. Lecturer');
+        if (res?.mode === 'cloud_confirmation_required') {
+          alert('Account registered! Please check your email inbox to verify your account.');
+        } else if (res?.mode === 'local') {
+          console.info(res.notice || 'Local account created');
+        }
       } else {
         await AuthService.signIn(email, password);
       }

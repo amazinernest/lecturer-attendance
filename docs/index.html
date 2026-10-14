@@ -79,6 +79,13 @@
             Don't have an account? Sign Up
           </button>
         </div>
+
+        <div style="margin-top: 14px; text-align: center;">
+          <button type="button" id="backendSettingsBtn" style="background: none; border: none; color: var(--text-muted); font-size: 11.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 6px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Cloud Backend (Supabase) Settings</span>
+          </button>
+        </div>
       </form>
 
       <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); font-size: 11px; font-weight: 600;">
@@ -636,6 +643,38 @@
           <button id="quickUploadConfirmBtn" class="btn btn-emerald" style="width: 100%; padding: 13px; font-size: 14.5px;">
             Confirm & Enroll Students Now
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL: CUSTOM BACKEND / SUPABASE CONFIGURATION
+       ======================================================================== -->
+  <div id="backendModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 480px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <h3>Cloud Backend (Supabase) Settings</h3>
+        </div>
+        <button class="modal-close-btn modal-close-trigger">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.5;">
+          💡 If the cloud server is unreachable or paused, the portal works 100% offline with local accounts. You can also connect your own live project from <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); font-weight: 600;">supabase.com</a>.
+        </div>
+        <div class="form-group">
+          <label for="cfgSupabaseUrl">Supabase Project URL</label>
+          <input type="url" id="cfgSupabaseUrl" class="form-control" placeholder="https://your-project-id.supabase.co">
+        </div>
+        <div class="form-group">
+          <label for="cfgSupabaseKey">Supabase Anon / Public Key</label>
+          <input type="text" id="cfgSupabaseKey" class="form-control" placeholder="sb_publishable_... or anon key">
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="button" id="resetBackendBtn" class="btn btn-secondary" style="flex: 1; padding: 11px;">Reset Default</button>
+          <button type="button" id="saveBackendBtn" class="btn btn-primary" style="flex: 1.5; padding: 11px;">Save & Reconnect</button>
         </div>
       </div>
     </div>
