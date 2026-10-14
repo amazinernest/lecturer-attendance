@@ -140,7 +140,7 @@ void main() {
         id: supabaseRecordJson['id'] as String,
         attendanceSessionId: supabaseRecordJson['attendance_session_id'] as String,
         studentId: supabaseRecordJson['student_id'] as String,
-        status: AttendanceStatus.fromValue(supabaseRecordJson['status'] as String?),
+        status: AttendanceStatus.fromValue(supabaseRecordJson['status']),
         createdAt: DateTime.parse(supabaseRecordJson['created_at'] as String),
         updatedAt: DateTime.parse(supabaseRecordJson['updated_at'] as String),
         synced: true,

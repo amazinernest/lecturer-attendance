@@ -541,15 +541,65 @@ class _RecordAttendanceScreenState
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
+                                children: const [
+                                  Icon(
                                     Icons.tune_rounded,
                                     size: 14,
                                     color: Colors.white,
                                   ),
-                                  const SizedBox(width: 4),
-                                  const Text(
+                                  SizedBox(width: 4),
+                                  Text(
                                     'Config',
+                                    style: TextStyle(
+                                      fontFamily: AppTypography.fontFamily,
+                                      color: Colors.white,
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+
+                        // Import Class List Pill
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () async {
+                              final imported = await context.push<bool>(
+                                  '/courses/${widget.courseId}/import');
+                              if (imported == true || mounted) {
+                                await _loadInitialData();
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(100),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981)
+                                    .withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(100),
+                                border: Border.all(
+                                  color: const Color(0xFF34D399)
+                                      .withValues(alpha: 0.5),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Icon(
+                                    Icons.person_add_alt_1_rounded,
+                                    size: 14,
+                                    color: Color(0xFF6EE7B7),
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Import',
                                     style: TextStyle(
                                       fontFamily: AppTypography.fontFamily,
                                       color: Colors.white,
@@ -792,35 +842,116 @@ class _RecordAttendanceScreenState
 
           // ── 3. STUDENT LIST ───────────────────────────────────────────
           Expanded(
-            child: _filteredStudents.isEmpty
+            child: _students.isEmpty
                 ? Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(32),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 24),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.person_search_rounded,
-                            size: 48,
-                            color: AppColors.textMuted.withValues(alpha: 0.5),
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: const BoxDecoration(
+                              color: AppColors.accentLight,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.group_add_rounded,
+                              size: 48,
+                              color: AppColors.accent,
+                            ),
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            _searchQuery.isNotEmpty
-                                ? 'No students found matching "$_searchQuery"'
-                                : 'No students found in this category.',
-                            style: const TextStyle(
+                          const SizedBox(height: 20),
+                          const Text(
+                            'No Students In This Course Yet',
+                            style: TextStyle(
                               fontFamily: AppTypography.fontFamily,
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
                             ),
                             textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Import your class list (Excel, CSV, Word, or PDF) to start recording roll call.',
+                            style: TextStyle(
+                              fontFamily: AppTypography.fontFamily,
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                              height: 1.4,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              final imported = await context.push<bool>(
+                                  '/courses/${widget.courseId}/import');
+                              if (imported == true || mounted) {
+                                await _loadInitialData();
+                              }
+                            },
+                            icon: const Icon(Icons.upload_file_rounded, size: 20),
+                            label: const Text('Import Class List Now'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.accent,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 2,
+                            ),
                           ),
                         ],
                       ),
                     ),
                   )
+                : _filteredStudents.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.person_search_rounded,
+                                size: 48,
+                                color: AppColors.textMuted.withValues(alpha: 0.5),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                _searchQuery.isNotEmpty
+                                    ? 'No students found matching "$_searchQuery"'
+                                    : 'No students found in "$_filterMode" category.',
+                                style: const TextStyle(
+                                  fontFamily: AppTypography.fontFamily,
+                                  fontSize: 14,
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              if (_filterMode != 'All' || _searchQuery.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                TextButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _filterMode = 'All';
+                                      _searchQuery = '';
+                                      _searchController.clear();
+                                    });
+                                  },
+                                  child: const Text('Show All Students'),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      )
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                     itemCount: _filteredStudents.length,

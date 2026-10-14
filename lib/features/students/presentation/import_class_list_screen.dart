@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,22 +33,43 @@ class _ImportClassListScreenState extends ConsumerState<ImportClassListScreen> {
       final existingStudents = await db.getStudentsForCourse(widget.courseId);
       final existingMatrics = existingStudents.map((s) => s.matricNumber).toList();
 
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['csv', 'xlsx', 'xls', 'txt', 'pdf', 'doc', 'docx'],
-        withData: true,
-      );
+      FilePickerResult? result;
+      try {
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: [
+            'csv', 'xlsx', 'xls', 'txt', 'pdf', 'doc', 'docx',
+            'CSV', 'XLSX', 'XLS', 'TXT', 'PDF', 'DOC', 'DOCX',
+          ],
+          withData: true,
+        );
+      } catch (_) {
+        // Fallback to FileType.any if custom mime filtering fails on certain Android distributions
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.any,
+          withData: true,
+        );
+      }
 
       if (result != null && result.files.isNotEmpty) {
         final file = result.files.first;
-        final bytes = file.bytes;
+        Uint8List? bytes = file.bytes;
 
-        if (bytes != null) {
+        // On Android / Desktop, FilePicker often returns file.path with bytes == null
+        if (bytes == null && file.path != null) {
+          final ioFile = File(file.path!);
+          if (await ioFile.exists()) {
+            bytes = await ioFile.readAsBytes();
+          }
+        }
+
+        if (bytes != null && bytes.isNotEmpty) {
           final parsed = ClassListParser.parseFile(
             bytes: bytes,
             fileName: file.name,
             courseId: widget.courseId,
             existingMatricNumbers: existingMatrics,
+            existingStudents: existingStudents,
           );
 
           setState(() {
@@ -55,13 +77,33 @@ class _ImportClassListScreenState extends ConsumerState<ImportClassListScreen> {
             _fileBytes = bytes;
             _parseResult = parsed;
           });
+
+          if (parsed.validStudents.isEmpty && mounted) {
+            final errorMsg = parsed.errors.isNotEmpty
+                ? parsed.errors.first.issueDescription
+                : 'Could not find columns for Student Name and Matriculation Number.';
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('No valid students found in "${file.name}". $errorMsg'),
+                backgroundColor: AppColors.absentRed,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Unable to read file content. Please ensure the file is accessible and try again.'),
+              backgroundColor: AppColors.absentRed,
+            ),
+          );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Unable to read this file. Please check that it is a valid CSV, Excel, Word (DOC/DOCX), or PDF file.'),
+          SnackBar(
+            content: Text('Unable to read this file: $e. Please verify it is a valid CSV, Excel, Word, or PDF file.'),
             backgroundColor: AppColors.absentRed,
           ),
         );
@@ -80,6 +122,9 @@ class _ImportClassListScreenState extends ConsumerState<ImportClassListScreen> {
       final db = ref.read(databaseProvider);
       await db.batchInsertStudents(result.validStudents);
 
+      // Invalidate stream so all listening screens (CourseDashboard, RecordAttendance) update instantly
+      ref.invalidate(studentsStreamProvider(widget.courseId));
+
       // Upload raw document to Supabase Storage bucket: lecturers-attendance-files
       if (_fileBytes != null && _selectedFileName != null) {
         await StorageService().uploadImportedDocument(_fileBytes!, _selectedFileName!);
@@ -94,11 +139,11 @@ class _ImportClassListScreenState extends ConsumerState<ImportClassListScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${result.validCount} students added and file backed up to cloud.'),
+            content: Text('${result.validCount} students added successfully!'),
             backgroundColor: AppColors.presentGreen,
           ),
         );
-        context.pop();
+        context.pop(true);
       }
     } catch (e) {
       if (mounted) {
