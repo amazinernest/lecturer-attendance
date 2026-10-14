@@ -43,6 +43,12 @@ export class AuthService {
     }
   }
 
+  static isCloudActive() {
+    const savedUrl = localStorage.getItem('lecturer_custom_supabase_url');
+    const savedKey = localStorage.getItem('lecturer_custom_supabase_key');
+    return !!savedUrl && !!savedKey;
+  }
+
   /**
    * Initializes auth state from stored JWT session or active Supabase session
    */
@@ -76,8 +82,8 @@ export class AuthService {
       }
     }
 
-    // 2. Sync with Supabase Auth state if online
-    if (supabase) {
+    // 2. Sync with Supabase Auth state if custom cloud is configured
+    if (this.isCloudActive() && supabase) {
       try {
         const { data } = await supabase.auth.getSession();
         if (data && data.session) {
@@ -188,7 +194,7 @@ export class AuthService {
   static async signIn(email, password) {
     const cleanEmail = email.trim().toLowerCase();
 
-    if (supabase) {
+    if (this.isCloudActive() && supabase) {
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: cleanEmail,
@@ -244,7 +250,7 @@ export class AuthService {
     const cleanName = fullName?.trim() || 'Dr. Lecturer';
     let cloudAttemptFailed = false;
 
-    if (supabase) {
+    if (this.isCloudActive() && supabase) {
       try {
         const { data, error } = await supabase.auth.signUp({
           email: cleanEmail,

@@ -208,6 +208,15 @@ class App {
         document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('active'));
       });
     });
+
+    // Close modal when clicking outside on the backdrop
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+      backdrop.addEventListener('click', e => {
+        if (e.target === backdrop) {
+          backdrop.classList.remove('active');
+        }
+      });
+    });
   }
 
   // ==========================================
@@ -451,36 +460,81 @@ class App {
           <button class="btn btn-secondary" onclick="window.app.openImporterForCourse('${c.id}')">
             <span>Import List</span>
           </button>
+          <button class="btn btn-danger" onclick="window.app.handleDeleteCourse('${c.id}')" title="Delete Course" style="padding: 8px 12px;">
+            <span>🗑️ Delete</span>
+          </button>
         </div>
       </div>
     `).join('');
   }
 
   static openCreateCourseModal() {
-    document.getElementById('createCourseModal').classList.add('active');
+    const modal = document.getElementById('createCourseModal');
+    if (modal) modal.classList.add('active');
   }
 
   static async handleCreateCourse() {
-    const code = document.getElementById('newCourseCode').value;
-    const title = document.getElementById('newCourseTitle').value;
-    const dept = document.getElementById('newCourseDept').value;
-    const level = document.getElementById('newCourseLevel').value;
-    const sem = document.getElementById('newCourseSem').value;
-    const session = document.getElementById('newCourseSession').value;
-    const classes = document.getElementById('newCourseClasses').value;
+    const code = document.getElementById('newCourseCode')?.value?.trim();
+    const title = document.getElementById('newCourseTitle')?.value?.trim();
+    const dept = document.getElementById('newCourseDept')?.value?.trim();
+    const level = document.getElementById('newCourseLevel')?.value?.trim();
+    const sem = document.getElementById('newCourseSem')?.value;
+    const session = document.getElementById('newCourseSession')?.value?.trim();
+    const classes = document.getElementById('newCourseClasses')?.value;
+    const submitBtn = document.querySelector('#createCourseForm button[type="submit"]');
 
-    await DataService.createCourse({
-      courseCode: code,
-      courseTitle: title,
-      department: dept,
-      level: level,
-      semester: sem,
-      academicSession: session,
-      expectedClasses: classes
-    });
+    if (!code || !title) {
+      alert('Please fill in both the Course Code and Course Title.');
+      return;
+    }
 
-    document.getElementById('createCourseModal').classList.remove('active');
-    document.getElementById('createCourseForm').reset();
+    const origText = submitBtn ? submitBtn.innerText : 'Create Course';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Creating Course...';
+    }
+
+    try {
+      const created = await DataService.createCourse({
+        courseCode: code,
+        courseTitle: title,
+        department: dept || 'Computer Science',
+        level: level || '300L',
+        semester: sem || 'First',
+        academicSession: session || '2024/2025',
+        expectedClasses: classes || 15
+      });
+
+      document.getElementById('createCourseModal')?.classList.remove('active');
+      document.getElementById('createCourseForm')?.reset();
+
+      await this.loadDashboardData();
+
+      if (created && created.id) {
+        this.activeCourseId = created.id;
+      }
+      this.switchTab('dashboard');
+    } catch (err) {
+      alert(`Could not create course: ${err.message}`);
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = origText;
+      }
+    }
+  }
+
+  static async handleDeleteCourse(courseId) {
+    const course = await DataService.getCourseById(courseId);
+    const code = course ? course.courseCode : 'this course';
+    if (!confirm(`Are you sure you want to delete ${code}? All enrolled students and attendance sessions will be removed.`)) {
+      return;
+    }
+
+    await DataService.deleteCourse(courseId);
+    if (this.activeCourseId === courseId) {
+      this.activeCourseId = null;
+    }
     await this.loadDashboardData();
   }
 
@@ -647,17 +701,7 @@ class App {
     this.activeStudents = await DataService.getStudentsForCourse(courseId);
     this.currentSessionId = this.currentSessionId || ('sess_' + Math.random().toString(36).substring(2, 10));
 
-    // Formulate responsive check-in URL that matches host (works on Wi-Fi IP and GitHub Pages)
-    let checkinPath = '/docs/checkin/';
-    if (window.location.hostname.includes('github.io')) {
-      checkinPath = '/lecturer-attendance/docs/checkin/';
-    } else {
-      const path = window.location.pathname;
-      if (path.includes('/docs')) {
-        checkinPath = path.substring(0, path.indexOf('/docs')) + '/docs/checkin/';
-      }
-    }
-    const checkinUrl = `${window.location.origin}${checkinPath}?courseId=${encodeURIComponent(course.id)}&courseCode=${encodeURIComponent(course.courseCode)}&courseTitle=${encodeURIComponent(course.courseTitle)}&classNum=1&sessionId=${encodeURIComponent(this.currentSessionId)}`;
+    const checkinUrl = this.getCheckinUrl(course, 1, this.currentSessionId);
 
     document.getElementById('projectorCourseCode').innerText = `${course.courseCode}: ${course.courseTitle}`;
     document.getElementById('projectorCheckinLink').href = checkinUrl;
@@ -737,18 +781,7 @@ class App {
     const classNumber = parseInt(document.getElementById('attClassNumberInput')?.value) || 1;
     this.currentSessionId = this.currentSessionId || ('sess_' + this.activeCourseId + '_L' + classNumber);
 
-    // Formulate responsive check-in URL matching host (handles localhost, LAN IP, and GitHub Pages)
-    let checkinPath = '/docs/checkin/';
-    if (window.location.hostname.includes('github.io')) {
-      checkinPath = '/lecturer-attendance/docs/checkin/';
-    } else {
-      const path = window.location.pathname;
-      if (path.includes('/docs')) {
-        checkinPath = path.substring(0, path.indexOf('/docs')) + '/docs/checkin/';
-      }
-    }
-
-    const checkinUrl = `${window.location.origin}${checkinPath}?courseId=${encodeURIComponent(course.id)}&courseCode=${encodeURIComponent(course.courseCode)}&courseTitle=${encodeURIComponent(course.courseTitle)}&classNum=${classNumber}&sessionId=${encodeURIComponent(this.currentSessionId)}`;
+    const checkinUrl = this.getCheckinUrl(course, classNumber, this.currentSessionId);
 
     // Update input link
     const linkInput = document.getElementById('sessionClassLinkInput');
@@ -1156,8 +1189,28 @@ class App {
       lecturerName: lecturerName
     });
   }
+
+  static getCheckinUrl(course, classNumber, sessionId) {
+    let checkinBase = '';
+    const origin = window.location.origin;
+    const path = window.location.pathname;
+
+    if (window.location.hostname.includes('github.io')) {
+      checkinBase = `${origin}/lecturer-attendance/docs/checkin/`;
+    } else if (path.includes('/docs')) {
+      checkinBase = `${origin}${path.substring(0, path.indexOf('/docs'))}/docs/checkin/`;
+    } else {
+      checkinBase = `${origin}/checkin/`;
+    }
+
+    return `${checkinBase}?courseId=${encodeURIComponent(course.id)}&courseCode=${encodeURIComponent(course.courseCode)}&courseTitle=${encodeURIComponent(course.courseTitle)}&classNum=${encodeURIComponent(classNumber || 1)}&sessionId=${encodeURIComponent(sessionId || '')}`;
+  }
 }
 
 // Attach to window for DOM event calls
 window.app = App;
-document.addEventListener('DOMContentLoaded', () => App.init());
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => App.init());
+} else {
+  App.init();
+}

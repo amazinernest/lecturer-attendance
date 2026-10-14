@@ -1036,6 +1036,18 @@
       closeVerificationModal();
       showSuccessView(name, matric, recordTime, receiptHash);
 
+      // Notify lecturer roll-call live listener via local storage event
+      if (sessionId) {
+        try {
+          localStorage.setItem(`local_student_checkin_${sessionId}`, JSON.stringify({
+            student_id: studentId,
+            name: name,
+            matric: matric,
+            timestamp: Date.now()
+          }));
+        } catch (e) {}
+      }
+
       // Record to Supabase asynchronously
       if (sessionId) {
         fetch(`${SUPABASE_URL}/rest/v1/attendance_records`, {
